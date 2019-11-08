@@ -163,8 +163,10 @@ DISPATCH_ALWAYS_INLINE
 static inline dispatch_group_t
 _dispatch_group_create_with_count(long count)
 {
+	// 创建，内存分配
 	dispatch_group_t dg = (dispatch_group_t)_dispatch_object_alloc(
 			DISPATCH_VTABLE(group), sizeof(struct dispatch_group_s));
+	// 初始化
 	_dispatch_semaphore_class_init(count, dg);
 	if (count) {
 		os_atomic_store2o(dg, do_ref_cnt, 1, relaxed); // <rdar://problem/22318411>
@@ -172,6 +174,10 @@ _dispatch_group_create_with_count(long count)
 	return dg;
 }
 
+/**
+  *  @brief  创建组。
+  *  @see   _dispatch_group_create_with_count
+  */
 dispatch_group_t
 dispatch_group_create(void)
 {

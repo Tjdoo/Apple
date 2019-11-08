@@ -14,6 +14,10 @@
 @implementation AppDelegate
 
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Werror"
+#pragma clang diagnostic ignored "-Wunused-parameter"
+
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
     return YES;
@@ -46,5 +50,6 @@
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
 }
 
+#pragma clang diagnostic pop
 
 @end
