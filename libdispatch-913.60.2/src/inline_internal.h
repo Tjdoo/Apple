@@ -1247,11 +1247,9 @@ _dispatch_queue_mgr_unlock(dispatch_queue_t dq)
 	return _dq_state_is_dirty(old_state);
 }
 
-/* Used by _dispatch_barrier_{try,}sync
+/* Used by _dispatch_barrier_{try,}sync   用在 _dispatch_barrier_trysync 或者 _dispatch_barrier_sync
  *
- * Note, this fails if any of e:1 or dl!=0, but that allows this code to be a
- * simple cmpxchg which is significantly faster on Intel, and makes a
- * significant difference on the uncontended codepath.
+ * Note, this fails if any of e:1 or dl!=0, but that allows this code to be a simple cmpxchg which is significantly faster on Intel, and makes a significant difference on the uncontended codepath.
  *
  * See discussion for DISPATCH_QUEUE_DIRTY in queue_internal.h
  *
@@ -1265,12 +1263,19 @@ _dispatch_queue_try_acquire_barrier_sync_and_suspend(dispatch_queue_t dq,
 {
 	uint64_t init  = DISPATCH_QUEUE_STATE_INIT_VALUE(dq->dq_width);
 	uint64_t value = DISPATCH_QUEUE_WIDTH_FULL_BIT | DISPATCH_QUEUE_IN_BARRIER |
-			_dispatch_lock_value_from_tid(tid) |
+			_dispatch_lock_value_from_tid(tid) /* _dispatch_lock_value_from_tid 会去取 tid 二进制数的 2 到 31 位作为值（从 0 位算起）*/ |
 			(suspend_count * DISPATCH_QUEUE_SUSPEND_INTERVAL);
 	uint64_t old_state, new_state;
 
+	/* 这里面有一堆宏定义的原子操作，事实是：尝试将 new_state 赋值给 dq.dq_state。
+	
+	 1、用原子操作（atomic_load_explicit）取当前 dq_state 的值，作为 old_state。
+	 2、如果 old_state 不是 dq_state 的默认值（init | role）， 则赋值失败，返回 false（这说明之前已经有人更改过 dq_state，在串行队列中，一次仅允许一个人更改 dq_state）, 获取 lock 失败。
+	 3、否则 dq_state 赋值为 new_state（利用原子操作 atomic_compare_exchange_weak_explicit 做赋值）, 返回 true，获取 lock 成功。
+	*/
 	return os_atomic_rmw_loop2o(dq, dq_state, old_state, new_state, acquire, {
 		uint64_t role = old_state & DISPATCH_QUEUE_ROLE_MASK;
+		// 如果 dq_state 已经被修改过，则直接返回 false，不更新 dq_state 为 new_state
 		if (old_state != (init | role)) {
 			os_atomic_rmw_loop_give_up(break);
 		}
@@ -1697,12 +1702,19 @@ _dispatch_queue_push_update_head(dispatch_queue_t dq,
 
 DISPATCH_ALWAYS_INLINE
 static inline void
-_dispatch_root_queue_push_inline(dispatch_queue_t dq, dispatch_object_t _head,
-		dispatch_object_t _tail, int n)
+_dispatch_root_queue_push_inline(dispatch_queue_t dq,
+								 dispatch_object_t _head,
+								 dispatch_object_t _tail,
+								 int n)
 {
 	struct dispatch_object_s *head = _head._do, *tail = _tail._do;
+	// 当 queue 为空，且需要设置 header 时，会进入到这里。这里应该是第一次使用 root queue 的时候会进入一次
+	// 在执行新的任务时，GCD 会尝试更新 root queue 的任务列表。如果是第一次向 root queue 投递任务，则此时的任务列表是空，更新任务列表失败，则会进入 _dispatch_global_queue_poke 来激活 root queue
+	// 尝试更新 dq 的 list，如果是第一次，list 为空，返回 false
 	if (unlikely(_dispatch_queue_push_update_tail_list(dq, head, tail))) {
+		// 设置 queue 头
 		_dispatch_queue_push_update_head(dq, head);
+		// 这里激活 root queue，这里的 n 是入队 dq 个数，是 1
 		return _dispatch_global_queue_poke(dq, n, 0);
 	}
 }
@@ -1722,15 +1734,21 @@ _dispatch_queue_push_inline(dispatch_queue_t dq, dispatch_object_t _tail,
 	// the blocks submitted to the queue may release the last reference to the
 	// queue when invoked by _dispatch_queue_drain. <rdar://problem/6932776>
 	bool overriding = _dispatch_queue_need_override_retain(dq, qos);
+	
+	// 将 tail 放入到 dq 中
 	if (unlikely(_dispatch_queue_push_update_tail(dq, tail))) {
 		if (!overriding) _dispatch_retain_2(dq->_as_os_obj);
 		_dispatch_queue_push_update_head(dq, tail);
 		flags = DISPATCH_WAKEUP_CONSUME_2 | DISPATCH_WAKEUP_MAKE_DIRTY;
-	} else if (overriding) {
+	}
+	else if (overriding) {
 		flags = DISPATCH_WAKEUP_CONSUME_2;
-	} else {
+	}
+	else {
 		return;
 	}
+	// 将我们提交的任务，放到 dq 的队尾。将任务入队后，则调用 dx_wakeup 方法唤醒 dq
+	// 查看 init.c 文件，do_wakeup 定义
 	return dx_wakeup(dq, qos, flags);
 }
 
@@ -1900,12 +1918,18 @@ _dispatch_is_in_root_queues_array(dispatch_queue_t dq)
 }
 
 DISPATCH_ALWAYS_INLINE DISPATCH_CONST
+/**
+  *   @brief   从 root queue 中获取一个 queue
+  */
 static inline dispatch_queue_t
 _dispatch_get_root_queue(dispatch_qos_t qos, bool overcommit)
 {
+	// 判断优先级是否合法
 	if (unlikely(qos == DISPATCH_QOS_UNSPECIFIED || qos > DISPATCH_QOS_MAX)) {
 		DISPATCH_CLIENT_CRASH(qos, "Corrupted priority");
 	}
+	// 根据 qos 和是否 overcommit，取得 root queues 数组中对应的 queue（一共有 12 个 root queue）
+	// qos == DISPATCH_QOS_DEFAULT，值是4。根据公式，2*(4-1) + 1 = 7, 所有创建的串行队列应该取 root queue 数组的第 8 个 queue，而由于并行队列的 overcommit 是 false（0），并行队列回去 root queue 的第 7 个元素：
 	return &_dispatch_root_queues[2 * (qos - 1) + overcommit];
 }
 
@@ -2355,6 +2379,7 @@ static inline bool
 _dispatch_block_has_private_data(const dispatch_block_t block)
 {
 	extern void (*_dispatch_block_special_invoke)(void*);
+	
 	return (_dispatch_Block_invoke(block) == _dispatch_block_special_invoke);
 }
 
@@ -2473,13 +2498,16 @@ DISPATCH_ALWAYS_INLINE
 static inline void
 _dispatch_continuation_with_group_invoke(dispatch_continuation_t dc)
 {
-	struct dispatch_object_s *dou = dc->dc_data;
+	struct dispatch_object_s *dou = dc->dc_data;  // group 方式时，这里的 dou 是 dispatch_group_s 类型
 	unsigned long type = dx_type(dou);
 	if (type == DISPATCH_GROUP_TYPE) {
+		// 调用 client 回调
 		_dispatch_client_callout(dc->dc_ctxt, dc->dc_func);
 		_dispatch_introspection_queue_item_complete(dou);
+		// group 任务执行完，leave group
 		dispatch_group_leave((dispatch_group_t)dou);
-	} else {
+	}
+	else {
 		DISPATCH_INTERNAL_CRASH(dx_type(dou), "Unexpected object type");
 	}
 }
@@ -2501,12 +2529,15 @@ _dispatch_continuation_invoke_inline(dispatch_object_t dou, voucher_t ov,
 		_dispatch_continuation_voucher_adopt(dc, ov, dc_flags);
 		if (dc_flags & DISPATCH_OBJ_CONSUME_BIT) {
 			dc1 = _dispatch_continuation_free_cacheonly(dc);
-		} else {
+		}
+		else {
 			dc1 = NULL;
 		}
+		// group 会走这里
 		if (unlikely(dc_flags & DISPATCH_OBJ_GROUP_BIT)) {
 			_dispatch_continuation_with_group_invoke(dc);
-		} else {
+		}
+		else {
 			_dispatch_client_callout(dc->dc_ctxt, dc->dc_func);
 			_dispatch_introspection_queue_item_complete(dou);
 		}
@@ -2520,17 +2551,22 @@ _dispatch_continuation_invoke_inline(dispatch_object_t dou, voucher_t ov,
 DISPATCH_ALWAYS_INLINE_NDEBUG
 static inline void
 _dispatch_continuation_pop_inline(dispatch_object_t dou,
-		dispatch_invoke_context_t dic, dispatch_invoke_flags_t flags,
-		dispatch_queue_t dq)
+								  dispatch_invoke_context_t dic,
+								  dispatch_invoke_flags_t flags,
+								  dispatch_queue_t dq)
 {
 	dispatch_pthread_root_queue_observer_hooks_t observer_hooks =
 			_dispatch_get_pthread_root_queue_observer_hooks();
 	if (observer_hooks) observer_hooks->queue_will_execute(dq);
 	_dispatch_trace_continuation_pop(dq, dou);
 	flags &= _DISPATCH_INVOKE_PROPAGATE_MASK;
+	
+	// 到这里，我们提交的任务，才被 queue 执行。
 	if (_dispatch_object_has_vtable(dou)) {
+		// dx_invoke是一个宏，它会调用 _dispatch_queue_invoke 方法, 结合调用堆栈，最后会调用 _dispatch_queue_serial_drain。
 		dx_invoke(dou._do, dic, flags);
-	} else {
+	}
+	else {
 		_dispatch_continuation_invoke_inline(dou, DISPATCH_NO_VOUCHER, flags);
 	}
 	if (observer_hooks) observer_hooks->queue_did_execute(dq);
@@ -2608,13 +2644,20 @@ _dispatch_continuation_init_f(dispatch_continuation_t dc,
 	_dispatch_continuation_priority_set(dc, pp, flags);
 }
 
+/**
+  *  @brief   work 打包
+  */
 DISPATCH_ALWAYS_INLINE
 static inline void
 _dispatch_continuation_init(dispatch_continuation_t dc,
-		dispatch_queue_class_t dqu, dispatch_block_t work,
-		pthread_priority_t pp, dispatch_block_flags_t flags, uintptr_t dc_flags)
+							dispatch_queue_class_t dqu,
+							dispatch_block_t work,
+							pthread_priority_t pp,
+							dispatch_block_flags_t flags,
+							uintptr_t dc_flags)
 {
 	dc->dc_flags = dc_flags | DISPATCH_OBJ_BLOCK_BIT;
+	// 将 work 封装到 dispatch_continuation_t 中
 	dc->dc_ctxt = _dispatch_Block_copy(work);
 	_dispatch_continuation_priority_set(dc, pp, flags);
 
@@ -2624,9 +2667,12 @@ _dispatch_continuation_init(dispatch_continuation_t dc,
 		return _dispatch_continuation_init_slow(dc, dqu, flags);
 	}
 
+	// 因为在 dispath_async() 中 flag 被设置为 DISPATCH_OBJ_CONSUME_BIT，因此会走这里
 	if (dc_flags & DISPATCH_OBJ_CONSUME_BIT) {
+		// 这里是设置 dc 的功能函数：1、执行 block；2、release block 对象
 		dc->dc_func = _dispatch_call_block_and_release;
-	} else {
+	}
+	else {
 		dc->dc_func = _dispatch_Block_invoke(work);
 	}
 	_dispatch_continuation_voucher_set(dc, dqu, flags);

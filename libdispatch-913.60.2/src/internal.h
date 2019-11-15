@@ -352,15 +352,38 @@ DISPATCH_EXPORT DISPATCH_NOTHROW void dispatch_atfork_child(void);
 #define NSEC_PER_USEC 1000ull
 
 /* I wish we had __builtin_expect_range() */
+/**
+  *  @discussion   __builtin_expect。https://www.jianshu.com/p/bd629d25dc2e
+ 
+ 这个其实是个函数，针对编译器优化的一个函数。写代码中我们经常会遇到条件判断语句：
+ 
+	 <code>
+	 if(今天是工作日) {
+		printf("好好上班");
+	 }
+	 else{
+		printf("好好睡觉");
+	 }
+	 </code>
+ 
+ CPU 读取指令的时候并非一条一条的来读，而是多条一起加载进来，比如已经加载了 if(今天是工作日) printf(“好好上班”); 的指令，这时候条件式如果为非，也就是非工作日，那么 CPU 继续把 printf(“好好睡觉”); 这条指令加载进来，这样就造成了性能浪费的现象。
+ 
+ __builtin_expect 的第一个参数是实际值，第二个参数是预测值。使用这个目的是告诉编译器 if 条件式是不是有更大的可能被满足。
+  */
 #if __GNUC__
 #define _safe_cast_to_long(x) \
 		({ _Static_assert(sizeof(typeof(x)) <= sizeof(long), \
 				"__builtin_expect doesn't support types wider than long"); \
 				(long)(x); })
+
+// fastpath 表示更大可能成立，slowpath 表示更大可能不成立。这两个理解起来跟 likely 和 unlikely 一样，只需要关注里面的条件式是否满足即可。
 #define fastpath(x) ((typeof(x))__builtin_expect(_safe_cast_to_long(x), ~0l))
 #define slowpath(x) ((typeof(x))__builtin_expect(_safe_cast_to_long(x), 0l))
+
+// likely 表示更大可能成立，unlikely 表示更大可能不成立。if(likely(a == 0))理解成 if(a==0) 即可，unlikely也是同样的。
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
+
 #else
 #define fastpath(x) (x)
 #define slowpath(x) (x)

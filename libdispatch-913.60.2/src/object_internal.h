@@ -395,9 +395,9 @@ typedef struct _os_object_vtable_s {
 
 typedef struct _os_object_s {
 	_OS_OBJECT_HEADER(
-	const _os_object_vtable_s *os_obj_isa,
-	os_obj_ref_cnt,
-	os_obj_xref_cnt);
+	const _os_object_vtable_s *os_obj_isa, // 这也是个宏定义，展开后似乎是可以被子类重写的和引用计数相关的两个函数指针
+	os_obj_ref_cnt,  // 引用计数，这是 GCD 内部使用的计数器
+	os_obj_xref_cnt);  // 外部引用计数，这是 GCD 外部使用的计数器，两者都为 0 的时候才能 dispose
 } _os_object_s;
 
 #if OS_OBJECT_HAVE_OBJC1
@@ -417,15 +417,15 @@ typedef struct _os_object_s {
 
 #define _DISPATCH_OBJECT_HEADER(x) \
 	struct _os_object_s _as_os_obj[0]; \
-	OS_OBJECT_STRUCT_HEADER(dispatch_##x); \
-	struct dispatch_##x##_s *volatile do_next; \
-	struct dispatch_queue_s *do_targetq; \
-	void *do_ctxt; \
-	void *do_finalizer
+	OS_OBJECT_STRUCT_HEADER(dispatch_##x); /*  这个宏将 dispath_##x 的内容复制进来，在逻辑上可以理解为继承，例如：可以理解 dispatch_object_s 继承自 _os_object_s */ \
+	struct dispatch_##x##_s *volatile do_next;  /* 链表的 next */\
+	struct dispatch_queue_s *do_targetq; /* 目标队列，指定这个 object 在哪个 queue 中执行 */ \
+	void *do_ctxt; /*  上下文，我们要传递的参数  */\
+	void *do_finalizer  /*  析构函数  */
 
 #define DISPATCH_OBJECT_HEADER(x) \
 	struct dispatch_object_s _as_do[0]; \
-	_DISPATCH_OBJECT_HEADER(x)
+	_DISPATCH_OBJECT_HEADER(x)  // 查找 _DISPATCH_OBJECT_HEADER()
 
 // Swift-unavailable -init requires method in each class.
 #define DISPATCH_UNAVAILABLE_INIT() \
@@ -439,21 +439,35 @@ _OS_OBJECT_DECL_PROTOCOL(dispatch_object, object);
 OS_OBJECT_CLASS_DECL(dispatch_object, object,
 		DISPATCH_OBJECT_VTABLE_HEADER(dispatch_object));
 
+/**
+  *  @brief   展开后：
+ 
+ 	<code>
+	 struct dispatch_object_s {
+		 struct _os_object_s _as_os_obj[0];
+		 OS_OBJECT_STRUCT_HEADER(dispatch_object);    // 继承自 _os_object_s 的部分，和引用计数相关
+		 struct dispatch_object_s *volatile do_next;  // 链表的 next
+		 struct dispatch_queue_s *do_targetq;  // 目标队列，指定这个object在哪个queue中执行
+		 void *do_ctxt;     // 上下文，我们要传递的参数
+		 void *do_finalizer；  // 析构函数
+	 };
+	 </code>
+  */
 struct dispatch_object_s {
 	_DISPATCH_OBJECT_HEADER(object);
 };
 
 #if OS_OBJECT_HAVE_OBJC1
 #define _OS_MPSC_QUEUE_FIELDS(ns, __state_field__) \
-	DISPATCH_UNION_LE(uint64_t volatile __state_field__, \
+	DISPATCH_UNION_LE(uint64_t volatile __state_field__, /* __state_field 传值 dq_state 时，表示 queue 的状态*/\
 			dispatch_lock __state_field__##_lock, \
 			uint32_t __state_field__##_bits \
 	) DISPATCH_ATOMIC64_ALIGN; \
 	struct dispatch_object_s *volatile ns##_items_head; \
-	unsigned long ns##_serialnum; \
-	const char *ns##_label; \
-	struct dispatch_object_s *volatile ns##_items_tail; \
-	dispatch_priority_t ns##_priority; \
+	unsigned long ns##_serialnum; /* ns 传值 queue 时，表示 queue 的编号 */\
+	const char *ns##_label; /* ns 传值 queue 时，表示 queue 的名称*/\
+	struct dispatch_object_s *volatile ns##_items_tail; /*  ns 传值 queue 时，表示 queue 尾元素*/\
+	dispatch_priority_t ns##_priority; /* ns 传值 queue 时，表示 queue 优先级 */\
 	int volatile ns##_sref_cnt
 #else
 #define _OS_MPSC_QUEUE_FIELDS(ns, __state_field__) \

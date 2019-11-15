@@ -116,7 +116,7 @@ DISPATCH_ENUM(dispatch_queue_flags, uint32_t,
 
 #define _DISPATCH_QUEUE_HEADER(x) \
 	struct os_mpsc_queue_s _as_oq[0]; \
-	DISPATCH_OBJECT_HEADER(x); \
+	DISPATCH_OBJECT_HEADER(x); /* 继续查找，在 object_internal.h 文件  */ \
 	_OS_MPSC_QUEUE_FIELDS(dq, dq_state); \
 	uint32_t dq_side_suspend_cnt; \
 	dispatch_unfair_lock_s dq_sidelock; \
@@ -127,7 +127,7 @@ DISPATCH_ENUM(dispatch_queue_flags, uint32_t,
 		struct dispatch_mach_recv_refs_s *dm_recv_refs; \
 	}; \
 	DISPATCH_UNION_LE(uint32_t volatile dq_atomic_flags, \
-		const uint16_t dq_width, \
+		const uint16_t dq_width, /* queue 的并发数（dq_width == 1 表示是串行队列）*/\
 		const uint16_t __dq_opaque \
 	); \
 	DISPATCH_INTROSPECTION_QUEUE_HEADER
@@ -497,9 +497,44 @@ struct _dispatch_unpadded_queue_s {
 
 DISPATCH_CLASS_DECL(queue);
 
+/**
+  *  @brief   展开后
+ 
+ 	<code>
+	 struct dispatch_queue_s {
+	 	struct os_mpsc_queue_s _as_oq[0];
+ 
+	 	// 展开_OS_MPSC_QUEUE_FIELDS
+	 	struct dispatch_object_s *volatile queue_items_head;        // queue首元素
+		 DISPATCH_UNION_LE(
+			 uint64_t volatile dq_state,         // queue 的状态
+			 dispatch_lock dq_state_lock,
+			 uint32_t dq_state_bits
+		 ) DISPATCH_ATOMIC64_ALIGN;
+		 unsigned long queue_serialnum;         // queue 的编号
+		 const char *queue_label;                     // queue 的名称
+		 struct dispatch_object_s *volatile queue_items_tail;           // queue 尾元素
+		 dispatch_priority_t queue_priority;   // queue 优先级
+		 int volatile queue_sref_cnt
+ 
+		 uint32_t dq_side_suspend_cnt;
+		 dispatch_unfair_lock_s dq_sidelock;
+		 union {        // 这些是提交的queue上的元素队列吗？？？？？？？？
+			 dispatch_queue_t dq_specific_q;
+			 struct dispatch_source_refs_s *ds_refs;
+			 struct dispatch_timer_source_refs_s *ds_timer_refs;
+			 struct dispatch_mach_recv_refs_s *dm_recv_refs;
+		 };
+		 DISPATCH_UNION_LE(uint32_t volatile dq_atomic_flags,
+		 const uint16_t dq_width,      // queue的并发数（dq_width==1表示是串行队列）
+		 const uint16_t __dq_opaque
+		 );
+	 }
+ </cpde>
+  */
 #if !defined(__cplusplus) || !DISPATCH_INTROSPECTION
 struct dispatch_queue_s {
-	_DISPATCH_QUEUE_HEADER(queue);
+	_DISPATCH_QUEUE_HEADER(queue);  // 继续查找
 	DISPATCH_QUEUE_CACHELINE_PADDING; // for static queues only
 } DISPATCH_ATOMIC64_ALIGN;
 
@@ -683,11 +718,11 @@ typedef enum {
 DISPATCH_CLASS_DECL(queue_attr);
 struct dispatch_queue_attr_s {
 	OS_OBJECT_STRUCT_HEADER(dispatch_queue_attr);
-	dispatch_priority_requested_t dqa_qos_and_relpri;
-	uint16_t dqa_overcommit:2;
+	dispatch_priority_requested_t dqa_qos_and_relpri;   // queue 优先级
+	uint16_t dqa_overcommit:2;    // 是否可以 overcommit
 	uint16_t dqa_autorelease_frequency:2;
-	uint16_t dqa_concurrent:1;
-	uint16_t dqa_inactive:1;
+	uint16_t dqa_concurrent:1;    // 是否是并发队列
+	uint16_t dqa_inactive:1;      // 是否激活
 };
 
 enum {
@@ -836,6 +871,32 @@ dispatch_queue_attr_t _dispatch_get_default_queue_attr(void);
 // never set on continuations, used by mach.c only
 #define DISPATCH_OBJ_MACH_BARRIER		0x1000000ul
 
+
+/**
+  *  @brief   宏展开：
+ 
+<code>
+ typedef struct dispatch_continuation_s {
+	 struct dispatch_object_s _as_do[0];
+	 union {
+		 const void *do_vtable;
+		 uintptr_t dc_flags;
+	 };
+	 union {
+		 pthread_priority_t dc_priority;
+		 int dc_cache_cnt;
+		 uintptr_t dc_pad;
+	 };
+	 struct dispatch_continuation_s *volatile do_next;
+	 struct voucher_s *dc_voucher;
+	 dispatch_function_t dc_func;
+	 void *dc_ctxt;
+	 void *dc_data;
+	 void *dc_other
+ 
+ } *dispatch_continuation_t;
+ </code>
+  */
 typedef struct dispatch_continuation_s {
 	struct dispatch_object_s _as_do[0];
 	DISPATCH_CONTINUATION_HEADER(continuation);

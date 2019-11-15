@@ -888,7 +888,7 @@
 				);
 				INSTALL_PATH = /usr/lib;
 				IS_ZIPPERED = YES;
-				ORDER_FILE = "$(SRCROOT)/libobjc.order";
+				ORDER_FILE = "${SRCROOT}/libobjc.order";
 				"ORDER_FILE[sdk=iphonesimulator*]" = "";
 				OTHER_CFLAGS = (
 					"-fdollars-in-identifiers",
@@ -939,6 +939,7 @@
 				SUPPORTS_TEXT_BASED_API = YES;
 				TAPI_VERIFY_MODE = ErrorsOnly;
 				UNEXPORTED_SYMBOLS_FILE = unexported_symbols;
+				USER_HEADER_SEARCH_PATHS = "${SRCROOT}/include";
 				VALID_ARCHS = x86_64;
 			};
 			name = Debug;
@@ -962,7 +963,7 @@
 				);
 				INSTALL_PATH = /usr/lib;
 				IS_ZIPPERED = YES;
-				ORDER_FILE = "$(SDKROOT)/AppleInternal/OrderFiles/libobjc.order";
+				ORDER_FILE = "${SRCROOT}/libobjc.order";
 				"ORDER_FILE[sdk=iphonesimulator*]" = "";
 				OTHER_CFLAGS = (
 					"-fdollars-in-identifiers",
@@ -1013,6 +1014,7 @@
 				SUPPORTS_TEXT_BASED_API = YES;
 				TAPI_VERIFY_MODE = ErrorsOnly;
 				UNEXPORTED_SYMBOLS_FILE = unexported_symbols;
+				USER_HEADER_SEARCH_PATHS = "${SRCROOT}/include";
 				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = (
 					"$(inherited)",

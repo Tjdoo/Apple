@@ -252,6 +252,9 @@
 #define DISPATCH_TRANSPARENT_UNION
 #endif
 
+/**
+  *  @brief   函数 block
+  */
 typedef void (*dispatch_function_t)(void *_Nullable);
 
 #endif

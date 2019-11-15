@@ -53,18 +53,18 @@ typedef struct objc_category *Category;
 typedef struct objc_property *objc_property_t;
 
 struct objc_class {
-    Class _Nonnull isa  OBJC_ISA_AVAILABILITY;
+    Class _Nonnull isa  OBJC_ISA_AVAILABILITY;   // 指向元类的 isa 指针
 
 #if !__OBJC2__
-    Class _Nullable super_class                              OBJC2_UNAVAILABLE;
-    const char * _Nonnull name                               OBJC2_UNAVAILABLE;
-    long version                                             OBJC2_UNAVAILABLE;
-    long info                                                OBJC2_UNAVAILABLE;
-    long instance_size                                       OBJC2_UNAVAILABLE;
-    struct objc_ivar_list * _Nullable ivars                  OBJC2_UNAVAILABLE;
-    struct objc_method_list * _Nullable * _Nullable methodLists                    OBJC2_UNAVAILABLE;
-    struct objc_cache * _Nonnull cache                       OBJC2_UNAVAILABLE;
-    struct objc_protocol_list * _Nullable protocols          OBJC2_UNAVAILABLE;
+    Class _Nullable super_class                              OBJC2_UNAVAILABLE;  // 指向父类的指针
+    const char * _Nonnull name                               OBJC2_UNAVAILABLE;  // 类的名称
+    long version                                             OBJC2_UNAVAILABLE;  // 类的版本
+    long info                                                OBJC2_UNAVAILABLE;  // 类的标识信息
+    long instance_size                                       OBJC2_UNAVAILABLE;  // 实例的大小
+    struct objc_ivar_list * _Nullable ivars                  OBJC2_UNAVAILABLE;  // 成员变量地址
+    struct objc_method_list * _Nullable * _Nullable methodLists OBJC2_UNAVAILABLE; // 方法地址列表
+    struct objc_cache * _Nonnull cache                       OBJC2_UNAVAILABLE;  // 缓存最近使用的方法地址。缓存 obj_msgSend 中查找过的方法，下次方法调用的时候 obj_msgSend 会首先查找这个 cache，如果没有再进行查找，然后将查找过的方法记录在 cache 中，这样下次查找会更快速。
+    struct objc_protocol_list * _Nullable protocols          OBJC2_UNAVAILABLE;  // 协议列表
 #endif
 
 } OBJC2_UNAVAILABLE;

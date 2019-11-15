@@ -47,14 +47,19 @@
 
 #define os_atomic_load(p, m) \
 		atomic_load_explicit(_os_atomic_c11_atomic(p), memory_order_##m)
+// 将第二个参数，保存到第一个参数
 #define os_atomic_store(p, v, m) \
 		atomic_store_explicit(_os_atomic_c11_atomic(p), v, memory_order_##m)
 #define os_atomic_xchg(p, v, m) \
 		atomic_exchange_explicit(_os_atomic_c11_atomic(p), v, memory_order_##m)
+/**
+ *  @brief   其内部就是atomic_compare_exchange_strong_explicit 函数，这个函数的作用是：第二个参数与第一个参数值比较，如果相等，第三个参数的值替换第一个参数的值。如果不相等，把第一个参数的值赋值到第二个参数上。
+  */
 #define os_atomic_cmpxchg(p, e, v, m) \
 		({ _os_atomic_basetypeof(p) _r = (e); \
 		atomic_compare_exchange_strong_explicit(_os_atomic_c11_atomic(p), \
 		&_r, v, memory_order_##m, memory_order_relaxed); })
+
 #define os_atomic_cmpxchgv(p, e, v, g, m) \
 		({ _os_atomic_basetypeof(p) _r = (e); _Bool _b = \
 		atomic_compare_exchange_strong_explicit(_os_atomic_c11_atomic(p), \
@@ -73,6 +78,7 @@
 		memory_order_##m)
 #define os_atomic_add(p, v, m) \
 		_os_atomic_c11_op((p), (v), m, add, +)
+// 将 1 保存到第一个参数中
 #define os_atomic_add_orig(p, v, m) \
 		_os_atomic_c11_op_orig((p), (v), m, add, +)
 #define os_atomic_sub(p, v, m) \
@@ -102,6 +108,7 @@
 
 #define os_atomic_load2o(p, f, m) \
 		os_atomic_load(&(p)->f, m)
+// 将第二个参数，保存到第一个参数
 #define os_atomic_store2o(p, f, v, m) \
 		os_atomic_store(&(p)->f, (v), m)
 #define os_atomic_xchg2o(p, f, v, m) \
@@ -135,6 +142,7 @@
 
 #define os_atomic_inc(p, m) \
 		os_atomic_add((p), 1, m)
+// 将 1 保存到第一个参数中
 #define os_atomic_inc_orig(p, m) \
 		os_atomic_add_orig((p), 1, m)
 #define os_atomic_inc2o(p, f, m) \

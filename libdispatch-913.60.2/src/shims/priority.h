@@ -140,6 +140,9 @@ _dispatch_qos_to_qos_class(dispatch_qos_t qos)
 	}
 }
 
+/**
+  *  @brief   priority -》qos
+  */
 DISPATCH_ALWAYS_INLINE
 static inline dispatch_qos_t
 _dispatch_qos_from_queue_priority(long priority)

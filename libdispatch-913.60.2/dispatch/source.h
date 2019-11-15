@@ -694,9 +694,9 @@ API_AVAILABLE(macos(10.6), ios(4.0))
 DISPATCH_EXPORT DISPATCH_NONNULL_ALL DISPATCH_NOTHROW
 void
 dispatch_source_set_timer(dispatch_source_t source,
-	dispatch_time_t start,
-	uint64_t interval,
-	uint64_t leeway);
+						  dispatch_time_t start,
+						  uint64_t interval,
+						  uint64_t leeway);
 
 /*!
  * @function dispatch_source_set_registration_handler

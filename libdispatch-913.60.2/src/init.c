@@ -200,14 +200,13 @@ const struct dispatch_tsd_indexes_s dispatch_tsd_indexes = {
 };
 #endif // DISPATCH_USE_DIRECT_TSD
 
-// 6618342 Contact the team that owns the Instrument DTrace probe before
-//         renaming this symbol
+// 6618342 Contact the team that owns the Instrument DTrace probe before renaming this symbol
 DISPATCH_CACHELINE_ALIGN
 struct dispatch_queue_s _dispatch_main_q = {
 	DISPATCH_GLOBAL_OBJECT_HEADER(queue_main),
 #if !DISPATCH_USE_RESOLVERS
 	.do_targetq = &_dispatch_root_queues[
-			DISPATCH_ROOT_QUEUE_IDX_DEFAULT_QOS_OVERCOMMIT],
+			DISPATCH_ROOT_QUEUE_IDX_DEFAULT_QOS_OVERCOMMIT], // 同样也是取 root queue 中的 queue 作为 target queue
 #endif
 	.dq_state = DISPATCH_QUEUE_STATE_INIT_VALUE(1) |
 			DISPATCH_QUEUE_ROLE_BASE_ANON,
@@ -951,12 +950,15 @@ void *
 	DISPATCH_CLIENT_CRASH(0, "NULL was passed where a block should have been");
 }
 
+/**
+  *  @brief   它会在 dispatch_continuation_t dc 被执行时调用
+  */
 void
 _dispatch_call_block_and_release(void *block)
 {
 	void (^b)(void) = block;
-	b();
-	Block_release(b);
+	b(); // 执行 block
+	Block_release(b);  // 释放 block
 }
 
 #endif // __BLOCKS__

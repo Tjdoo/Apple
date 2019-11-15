@@ -31,7 +31,7 @@ struct dispatch_queue_s;
 
 #define DISPATCH_SEMAPHORE_HEADER(cls, ns) \
 	DISPATCH_OBJECT_HEADER(cls); \
-	long volatile ns##_value; \
+	long volatile ns##_value; /* ns 传入 dg，表示：这里来记录有几个 group 任务 */\
 	_dispatch_sema4_t ns##_sema
 
 struct dispatch_semaphore_header_s {
@@ -46,7 +46,7 @@ struct dispatch_semaphore_s {
 
 DISPATCH_CLASS_DECL(group);
 struct dispatch_group_s {
-	DISPATCH_SEMAPHORE_HEADER(group, dg);
+	DISPATCH_SEMAPHORE_HEADER(group, dg); // DISPATCH_SEMAPHORE_HEADER是一个宏定义，表明 dispatch_group_s 也可以看做是一个信号量对象。
 	int volatile dg_waiters;
 	struct dispatch_continuation_s *volatile dg_notify_head;
 	struct dispatch_continuation_s *volatile dg_notify_tail;

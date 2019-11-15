@@ -145,7 +145,9 @@ _dispatch_trace_queue_push_inline(dispatch_queue_t dq, dispatch_object_t _tail,
 		struct dispatch_object_s *dou = _tail._do;
 		_dispatch_trace_continuation(dq, dou, DISPATCH_QUEUE_PUSH);
 	}
+	// 第一个 push 似乎是为了监听 dq 入队（enqueue）的消息
 	_dispatch_introspection_queue_push(dq, _tail);
+	// 第二个 push 才是将 dq 入队, 这里的 _tail，实质是 _dispatch_continuation_t 类型
 	_dispatch_queue_push_inline(dq, _tail, qos);
 }
 

@@ -30,6 +30,7 @@
 		({ _Static_assert(sizeof(typeof(x)) <= sizeof(long), \
 				"__builtin_expect doesn't support types wider than long"); \
 				(long)(x); })
+//  见 internal.h
 #define fastpath(x) ((typeof(x))__builtin_expect(_safe_cast_to_long(x), ~0l))
 #define slowpath(x) ((typeof(x))__builtin_expect(_safe_cast_to_long(x), 0l))
 #define os_likely(x) __builtin_expect(!!(x), 1)

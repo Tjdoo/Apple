@@ -105,11 +105,30 @@ _dispatch_lock_is_locked(dispatch_lock lock_value)
 	return (lock_value & DLOCK_OWNER_MASK) != 0;
 }
 
+/**
+  *  @brief   检测死锁
+  *
+  *  串行队列死锁的情况是：
+ 
+ 线程 A 在串行队列 dq 中执行串行任务 task1 的过程中，如果再向 dq 中投递串行任务 task2，同时还要求必须阻塞当前线程，来等待 task2 结束（调用 dispatch_sync 投递 task2），那么这时候会发生死锁。
+ 
+ 因为这时候 task1 还没有结束，串行队列不会去执行 task2，而我们又要在当前线程等待 task2 的结束才肯继续执行 task1，即 task1 在等 task2，而task2 也在等 task1，循环等待，形成死锁。
+ 
+ 总结一下，GCD 会发生死锁的情况必须同时满足3个条件，才会形成task1和task2相互等待的情况：
+ 
+ 1、串行队列正在执行 task1
+ 2、在 task1 中又向串行队列投递了 task2
+ 3、task2 是以 dispatch_sync 方式投递的，会阻塞当前线程
+ 
+ 其实在 GCD 的死锁检测中，并没有完全覆盖以上 3 个条件。因为 GCD 对于条件 2，附加加了条件限制，即 task2 是在 task1 的执行线程中提交的。而条件 2 其实是没有这个限制的，task2 可以在和 task1 不同的线程中提交，同样可以造成死锁。因此，在这种情况下的死锁，GCD 是检测不出来的，也就不会 crash，仅仅是死锁。
+  */
 DISPATCH_ALWAYS_INLINE
 static inline bool
 _dispatch_lock_is_locked_by(dispatch_lock lock_value, dispatch_tid tid)
 {
 	// equivalent to _dispatch_lock_owner(lock_value) == tid
+	// lock_value 就是 dq_state，一个 32 位的整数。
+	// 通过判断((lock_value ^ tid) & DLOCK_OWNER_MASK) 是否为 0，来判断当前的串行队列是否已被同一个线程所获取。如果当前队列已经被当前线程获取，即当前线程在执行一个串行任务中，如果此时我们再阻塞等待一个新的串行任务，则会发生死锁。因此，在新版 GCD 中，当 ((lock_value ^ tid) & DLOCK_OWNER_MASK) == 0 时，就会主动触发 crash 来避免死锁。
 	return ((lock_value ^ tid) & DLOCK_OWNER_MASK) == 0;
 }
 

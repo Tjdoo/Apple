@@ -144,23 +144,17 @@ dispatch_async_f(dispatch_queue_t queue,
  * @function dispatch_sync
  *
  * @abstract
- * Submits a block for synchronous execution on a dispatch queue.
+ * Submits a block for synchronous execution on a dispatch queue.   提交一个任务到队列同步执行
  *
  * @discussion
- * Submits a block to a dispatch queue like dispatch_async(), however
- * dispatch_sync() will not return until the block has finished.
+ * Submits a block to a dispatch queue like dispatch_async(), however dispatch_sync() will not return until the block has finished.  在任务执行完成之前不返回
  *
- * Calls to dispatch_sync() targeting the current queue will result
- * in dead-lock. Use of dispatch_sync() is also subject to the same
- * multi-party dead-lock problems that may result from the use of a mutex.
+ * Calls to dispatch_sync() targeting the current queue will result in dead-lock. Use of dispatch_sync() is also subject to the same multi-party dead-lock problems that may result from the use of a mutex.
  * Use of dispatch_async() is preferred.
  *
- * Unlike dispatch_async(), no retain is performed on the target queue. Because
- * calls to this function are synchronous, the dispatch_sync() "borrows" the
- * reference of the caller.
+ * Unlike dispatch_async(), no retain is performed on the target queue. Because calls to this function are synchronous, the dispatch_sync() "borrows" the reference of the caller.
  *
- * As an optimization, dispatch_sync() invokes the block on the current
- * thread when possible.
+ * As an optimization, dispatch_sync() invokes the block on the current thread when possible.
  *
  * @param queue
  * The target dispatch queue to which the block is submitted.
@@ -181,22 +175,20 @@ dispatch_sync(dispatch_queue_t queue, DISPATCH_NOESCAPE dispatch_block_t block);
  * @function dispatch_sync_f
  *
  * @abstract
- * Submits a function for synchronous execution on a dispatch queue.
+ * Submits a function for synchronous execution on a dispatch queue.   提交用于在调度队列上同步执行的函数。
  *
  * @discussion
  * See dispatch_sync() for details.
  *
  * @param queue
- * The target dispatch queue to which the function is submitted.
- * The result of passing NULL in this parameter is undefined.
+ * The target dispatch queue to which the function is submitted.   目标队列
+ * The result of passing NULL in this parameter is undefined.    传 null 的行为是未知的
  *
  * @param context
  * The application-defined context parameter to pass to the function.
  *
  * @param work
- * The application-defined function to invoke on the target queue. The first
- * parameter passed to this function is the context provided to
- * dispatch_sync_f().
+ * The application-defined function to invoke on the target queue. The first parameter passed to this function is the context provided to dispatch_sync_f(). 要在目标队列上调用的应用程序定义的函数。传递给此函数的第一个参数是提供给 dispatch_sync_f() 的上下文。
  * The result of passing NULL in this parameter is undefined.
  */
 API_AVAILABLE(macos(10.6), ios(4.0))
@@ -349,16 +341,14 @@ DISPATCH_EXPORT struct dispatch_queue_s _dispatch_main_q;
  * @function dispatch_get_main_queue
  *
  * @abstract
- * Returns the default queue that is bound to the main thread.
+ * Returns the default queue that is bound to the main thread.   专门绑定到 main thread 上
  *
  * @discussion
- * In order to invoke blocks submitted to the main queue, the application must
- * call dispatch_main(), NSApplicationMain(), or use a CFRunLoop on the main
- * thread.
+ * In order to invoke blocks submitted to the main queue, the application must call dispatch_main(), NSApplicationMain(), or use a CFRunLoop on the main thread.   为了触发提交到 main queue 上的 block，和其他 queue 不一样，main queue 上的任务是依赖于 main runloop 触发的。
  *
  * @result
- * Returns the main queue. This queue is created automatically on behalf of
- * the main thread before main() is called.
+ * Returns the main queue. This queue is created automatically on behalf of the main thread before main() is called.
+ 	main queue 是由系统在 main() 方法调用前创建的
  */
 DISPATCH_INLINE DISPATCH_ALWAYS_INLINE DISPATCH_CONST DISPATCH_NOTHROW
 dispatch_queue_t
@@ -1143,11 +1133,10 @@ dispatch_barrier_sync(dispatch_queue_t queue,
  * @function dispatch_barrier_sync_f
  *
  * @abstract
- * Submits a barrier function for synchronous execution on a dispatch queue.
+ * Submits a barrier function for synchronous execution on a dispatch queue.   为了能在调度队列上同步执行，提交一个栅栏函数
  *
  * @discussion
- * Submits a function to a dispatch queue like dispatch_sync_f(), but marks that
- * fuction as a barrier (relevant only on DISPATCH_QUEUE_CONCURRENT queues).
+ * Submits a function to a dispatch queue like dispatch_sync_f(), but marks that fuction as a barrier (relevant only on DISPATCH_QUEUE_CONCURRENT queues).
  *
  * See dispatch_sync_f() for details.
  *
@@ -1159,17 +1148,15 @@ dispatch_barrier_sync(dispatch_queue_t queue,
  * The application-defined context parameter to pass to the function.
  *
  * @param work
- * The application-defined function to invoke on the target queue. The first
- * parameter passed to this function is the context provided to
- * dispatch_barrier_sync_f().
+ * The application-defined function to invoke on the target queue. The first parameter passed to this function is the context provided to dispatch_barrier_sync_f().
  * The result of passing NULL in this parameter is undefined.
  */
 API_AVAILABLE(macos(10.7), ios(4.3))
 DISPATCH_EXPORT DISPATCH_NONNULL1 DISPATCH_NONNULL3 DISPATCH_NOTHROW
 void
 dispatch_barrier_sync_f(dispatch_queue_t queue,
-	void *_Nullable context,
-	dispatch_function_t work);
+						void *_Nullable context,
+						dispatch_function_t work);
 
 /*!
  * @functiongroup Dispatch queue-specific contexts

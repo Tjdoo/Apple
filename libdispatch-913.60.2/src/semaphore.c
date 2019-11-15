@@ -163,12 +163,13 @@ DISPATCH_ALWAYS_INLINE
 static inline dispatch_group_t
 _dispatch_group_create_with_count(long count)
 {
-	// 创建，内存分配
+	// 创建一个 dg，内存分配
 	dispatch_group_t dg = (dispatch_group_t)_dispatch_object_alloc(
 			DISPATCH_VTABLE(group), sizeof(struct dispatch_group_s));
-	// 初始化
+	// 初始化 dg。这里 count 默认是 0
 	_dispatch_semaphore_class_init(count, dg);
 	if (count) {
+		// dg 引用计数 + 1
 		os_atomic_store2o(dg, do_ref_cnt, 1, relaxed); // <rdar://problem/22318411>
 	}
 	return dg;
@@ -218,6 +219,7 @@ _dispatch_group_wake(dispatch_group_t dg, bool needs_release)
 		tail = os_atomic_xchg2o(dg, dg_notify_tail, NULL, release);
 	}
 	rval = (long)os_atomic_xchg2o(dg, dg_waiters, 0, relaxed);
+	// 如果有 group 等待，则唤醒线程
 	if (rval) {
 		// wake group waiters
 		_dispatch_sema4_create(&dg->dg_sema, _DSEMA4_POLICY_FIFO);
@@ -226,6 +228,7 @@ _dispatch_group_wake(dispatch_group_t dg, bool needs_release)
 	uint16_t refs = needs_release ? 1 : 0; // <rdar://problem/22318411>
 	if (head) {
 		// async group notify blocks
+		// 依次执行 group 执行完毕时的回调 block
 		do {
 			next = os_mpsc_pop_snapshot_head(head, tail, do_next);
 			dispatch_queue_t dsn_queue = (dispatch_queue_t)head->dc_data;
@@ -234,17 +237,21 @@ _dispatch_group_wake(dispatch_group_t dg, bool needs_release)
 		} while ((head = next));
 		refs++;
 	}
-	if (refs) _dispatch_release_n(dg, refs);
+	if (refs) _dispatch_release_n(dg, refs); // 释放 group
 	return 0;
 }
 
 void
 dispatch_group_leave(dispatch_group_t dg)
 {
+	// 这里将 dg->dg_value -1（对应 dispatch_group_enter 的 +1）并将新值返回给 value
 	long value = os_atomic_dec2o(dg, dg_value, release);
+	
+	// 如果 group 中所有的任务都已经完成，则调用 _dispatch_group_wake
 	if (slowpath(value == 0)) {
 		return (void)_dispatch_group_wake(dg, true);
 	}
+	// 这里说明 dispatch_group_enter / dispatch_group_leave 必须成对调用，否则会 crash
 	if (slowpath(value < 0)) {
 		DISPATCH_CLIENT_CRASH(value,
 				"Unbalanced call to dispatch_group_leave()");
@@ -291,11 +298,13 @@ _dispatch_group_wait_slow(dispatch_group_t dg, dispatch_time_t timeout)
 
 	// check before we cause another signal to be sent by incrementing
 	// dg->dg_waiters
+	// 在 wait 前，先看有没有任务在，没有，直接 wake dg
 	value = os_atomic_load2o(dg, dg_value, ordered); // 19296565
 	if (value == 0) {
 		return _dispatch_group_wake(dg, false);
 	}
 
+	// 在 group 的 dg_waiters 中添加一个 waiter 计数
 	(void)os_atomic_inc2o(dg, dg_waiters, relaxed);
 	// check the values again in case we need to wake any threads
 	value = os_atomic_load2o(dg, dg_value, ordered); // 19296565
@@ -306,16 +315,20 @@ _dispatch_group_wait_slow(dispatch_group_t dg, dispatch_time_t timeout)
 		timeout = DISPATCH_TIME_FOREVER;
 	}
 
+	// 创建信号量，准备等待
 	_dispatch_sema4_create(&dg->dg_sema, _DSEMA4_POLICY_FIFO);
+	// 根据 time out 的值，有不同的等待策略
 	switch (timeout) {
 	default:
+		// 默认指定等待到 timeout
 		if (!_dispatch_sema4_timedwait(&dg->dg_sema, timeout)) {
 			break;
 		}
 		// Fall through and try to undo the earlier change to
 		// dg->dg_waiters
-	case DISPATCH_TIME_NOW:
+	case DISPATCH_TIME_NOW:  // 如果 timeout ==0，即不等待
 		orig_waiters = dg->dg_waiters;
+		// waiter 数量 -1，返回等待超时
 		while (orig_waiters) {
 			if (os_atomic_cmpxchgvw2o(dg, dg_waiters, orig_waiters,
 					orig_waiters - 1, &orig_waiters, relaxed)) {
@@ -324,33 +337,44 @@ _dispatch_group_wait_slow(dispatch_group_t dg, dispatch_time_t timeout)
 		}
 		// Another thread is running _dispatch_group_wake()
 		// Fall through and drain the wakeup.
-	case DISPATCH_TIME_FOREVER:
+	case DISPATCH_TIME_FOREVER:  // 一直等待
 		_dispatch_sema4_wait(&dg->dg_sema);
 		break;
 	}
 	return 0;
 }
 
+/**
+  *  @brief   同步 group。在底层用到了信号量，同时，会在 group 的 dg_waiters 中计数 +1。
+  */
 long
 dispatch_group_wait(dispatch_group_t dg, dispatch_time_t timeout)
 {
+	// 如果当前 group 没有任何任务，直接返回
 	if (dg->dg_value == 0) {
 		return 0;
 	}
+	// 如果 timeout == 0，直接返回
 	if (timeout == 0) {
 		return _DSEMA4_TIMEOUT();
 	}
 	return _dispatch_group_wait_slow(dg, timeout);
 }
 
+/**
+  *  @brief   异步 group
+  */
 DISPATCH_ALWAYS_INLINE
 static inline void
 _dispatch_group_notify(dispatch_group_t dg, dispatch_queue_t dq,
 		dispatch_continuation_t dsn)
 {
+	// 将 notifiy 的 queue 放入 dsn 的 dc_data 中，用于 group 任务 all finish 时，在指定的 queue 中调用 group finish block
 	dsn->dc_data = dq;
 	dsn->do_next = NULL;
 	_dispatch_retain(dq);
+	
+	// 将当前的 notify 存入到 dg_notify_tail 队列中，用于 finish 时回调 group
 	if (os_mpsc_push_update_tail(dg, dg_notify, dsn, do_next)) {
 		_dispatch_retain(dg);
 		os_atomic_store2o(dg, dg_notify_head, dsn, ordered);
@@ -377,8 +401,10 @@ void
 dispatch_group_notify(dispatch_group_t dg, dispatch_queue_t dq,
 		dispatch_block_t db)
 {
+	// 打包 db
 	dispatch_continuation_t dsn = _dispatch_continuation_alloc();
 	_dispatch_continuation_init(dsn, dq, db, 0, 0, DISPATCH_OBJ_CONSUME_BIT);
+	// 内部会调用私有函数 _dispatch_group_notify
 	_dispatch_group_notify(dg, dq, dsn);
 }
 #endif

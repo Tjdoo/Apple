@@ -43,8 +43,10 @@ static inline unsigned long _dispatch_source_timer_data(
   *  @see   source.h
   */
 dispatch_source_t
-dispatch_source_create(dispatch_source_type_t dst, uintptr_t handle,
-		unsigned long mask, dispatch_queue_t dq)
+dispatch_source_create(dispatch_source_type_t dst,
+					   uintptr_t handle,
+					   unsigned long mask,
+					   dispatch_queue_t dq)
 {
 	dispatch_source_refs_t dr;
 	dispatch_source_t ds;
@@ -59,8 +61,11 @@ dispatch_source_create(dispatch_source_type_t dst, uintptr_t handle,
 	ds = _dispatch_object_alloc(DISPATCH_VTABLE(source),
 			sizeof(struct dispatch_source_s));
 	// Initialize as a queue first, then override some settings below.
-	_dispatch_queue_init(ds->_as_dq, DQF_LEGACY, 1,
-			DISPATCH_QUEUE_INACTIVE | DISPATCH_QUEUE_ROLE_INNER);
+	// 初始化 ds
+	_dispatch_queue_init(ds->_as_dq,
+						 DQF_LEGACY,
+						 1,
+						 DISPATCH_QUEUE_INACTIVE | DISPATCH_QUEUE_ROLE_INNER);
 	
 	// 设置 ds 的参数，引用计数 + 1
 	ds->dq_label = "source";
@@ -68,12 +73,15 @@ dispatch_source_create(dispatch_source_type_t dst, uintptr_t handle,
 	ds->ds_refs = dr;
 	dr->du_owner_wref = _dispatch_ptr2wref(ds);
 
+	// 从 root queue 获取 queue
 	if (slowpath(!dq)) {
 		dq = _dispatch_get_root_queue(DISPATCH_QOS_DEFAULT, true);
-	} else {
+	}
+	else {
 		_dispatch_retain((dispatch_queue_t _Nonnull)dq);
 	}
 	ds->do_targetq = dq;
+	
 	if (dr->du_is_timer && (dr->du_fflags & DISPATCH_TIMER_INTERVAL)) {
 		_dispatch_source_set_interval(ds, handle);
 	}
@@ -1290,7 +1298,8 @@ _dispatch_source_timer_configure(dispatch_source_t ds)
 
 static dispatch_timer_config_t
 _dispatch_source_timer_config_create(dispatch_time_t start,
-		uint64_t interval, uint64_t leeway)
+									 uint64_t interval,
+									 uint64_t leeway)
 {
 	dispatch_timer_config_t dtc;
 	dtc = _dispatch_calloc(1ul, sizeof(struct dispatch_timer_config_s));
@@ -1352,12 +1361,15 @@ _dispatch_source_timer_config_create(dispatch_time_t start,
   */
 DISPATCH_NOINLINE
 void
-dispatch_source_set_timer(dispatch_source_t ds, dispatch_time_t start,
-		uint64_t interval, uint64_t leeway)
+dispatch_source_set_timer(dispatch_source_t ds,
+						  dispatch_time_t start,
+						  uint64_t interval,
+						  uint64_t leeway)
 {
 	dispatch_timer_source_refs_t dt = ds->ds_timer_refs;
 	dispatch_timer_config_t dtc;
 
+	// 屏蔽非 timer 类型的 source
 	if (unlikely(!dt->du_is_timer || (dt->du_fflags&DISPATCH_TIMER_INTERVAL))) {
 		DISPATCH_CLIENT_CRASH(ds, "Attempt to set timer on a non-timer source");
 	}
@@ -1365,6 +1377,7 @@ dispatch_source_set_timer(dispatch_source_t ds, dispatch_time_t start,
 	dtc = _dispatch_source_timer_config_create(start, interval, leeway);
 	_dispatch_source_timer_telemetry(ds, dtc->dtc_clock, &dtc->dtc_timer);
 	dtc = os_atomic_xchg2o(dt, dt_pending_config, dtc, release);
+	
 	if (dtc) free(dtc);
 	dx_wakeup(ds, 0, DISPATCH_WAKEUP_MAKE_DIRTY);
 }

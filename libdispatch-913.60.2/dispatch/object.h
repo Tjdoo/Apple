@@ -82,10 +82,17 @@ private:
 #define DISPATCH_GLOBAL_OBJECT(type, object) (&(object))
 #define DISPATCH_RETURNS_RETAINED
 #else /* Plain C */
+/**
+  *  @discussion  dispatch_object_t
+
+  	它是一个联合，可以表示 union 中任意的类型。起到的作用和基类指针相似，所有的子类型都可以用 dispatch_object_t 统一表示。类似平时见的 NSObject，它可以指向任何 Objective-C 对象。
+ 
+ 	注意：这只是逻辑上的继承关系，在实际的源码中，是看不到继承的符号的。而是通过宏的方式，将父类中的属性，在子类中再写一次。如继承了 _os_object_s 的 dispatch_object_s 的定义
+ */
 typedef union {
 	struct _os_object_s *_os_obj;
 	struct dispatch_object_s *_do;  // GCD 的基类，GCD 数据结构都是由这个结构体搭建起来的
-	struct dispatch_continuation_s *_dc;  // 任务类型，通常 dispatch_async 内的 block 最终都会封装成这个数据类型
+	struct dispatch_continuation_s *_dc;  // 向 queue 提交的任务，无论 block 还是 function 形式，最终都会被封装成这个数据类型
 	struct dispatch_queue_s *_dq; // 任务队列，我们创建的对列都是这个类型的，不管是串行队列还是并发队列
 	struct dispatch_queue_attr_s *_dqa;  // 任务队列的属性，任务队列的属性里面包含了任务队列里面的一些操作函数，可以表明这个任务队列是串行还是并发队列。
 	struct dispatch_group_s *_dg;
@@ -144,13 +151,10 @@ typedef union {
  * @typedef dispatch_block_t
  *
  * @abstract
- * The type of blocks submitted to dispatch queues, which take no arguments
- * and have no return value.
+ * The type of blocks submitted to dispatch queues, which take no arguments and have no return value.    提交到调度队列的 block 的类型
  *
  * @discussion
- * When not building with Objective-C ARC, a block object allocated on or
- * copied to the heap must be released with a -[release] message or the
- * Block_release() function.
+ * When not building with Objective-C ARC, a block object allocated on or copied to the heap must be released with a -[release] message or the Block_release() function.   在 MRC 环境需要发送 release 消息或者调用 Block_release() 释放被赋值到堆上的 block
  *
  * The declaration of a block literal allocates storage on the stack.
  * Therefore, this is an invalid construct:
@@ -175,11 +179,9 @@ typedef union {
  * }
  * </code>
  *
- * As the example demonstrates, the address of a stack variable is escaping the
- * scope in which it is allocated. That is a classic C bug.
+ * As the example demonstrates, the address of a stack variable is escaping the scope in which it is allocated. That is a classic C bug.
  *
- * Instead, the block literal must be copied to the heap with the Block_copy()
- * function or by sending it a -[copy] message.
+ * Instead, the block literal must be copied to the heap with the Block_copy() function or by sending it a -[copy] message.
  */
 typedef void (^dispatch_block_t)(void);
 #endif // __BLOCKS__
