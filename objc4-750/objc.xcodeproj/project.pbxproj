@@ -89,6 +89,8 @@
 		9672F7EE14D5F488007CEC96 /* NSObject.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9672F7ED14D5F488007CEC96 /* NSObject.mm */; };
 		AD0F6EBD23827FF900AE92B9 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = AD0F6EBA23827FF800AE92B9 /* main.m */; };
 		AD0F6EBE23827FF900AE92B9 /* Person.m in Sources */ = {isa = PBXBuildFile; fileRef = AD0F6EBC23827FF800AE92B9 /* Person.m */; };
+		AD0F6EC3238283A700AE92B9 /* TestWeak.m in Sources */ = {isa = PBXBuildFile; fileRef = AD0F6EC2238283A700AE92B9 /* TestWeak.m */; };
+		AD0F6EC72382843A00AE92B9 /* TestAlloc.m in Sources */ = {isa = PBXBuildFile; fileRef = AD0F6EC62382843A00AE92B9 /* TestAlloc.m */; };
 		B95141DD2233CB00009BA2E0 /* CrashReporterClient.h in Headers */ = {isa = PBXBuildFile; fileRef = B95141C92233CB00009BA2E0 /* CrashReporterClient.h */; };
 		B95141DE2233CB00009BA2E0 /* isa.h in Headers */ = {isa = PBXBuildFile; fileRef = B95141CA2233CB00009BA2E0 /* isa.h */; };
 		B95141DF2233CB00009BA2E0 /* Block_private.h in Headers */ = {isa = PBXBuildFile; fileRef = B95141CB2233CB00009BA2E0 /* Block_private.h */; };
@@ -105,6 +107,16 @@
 		B95141EA2233CB00009BA2E0 /* dyld_priv.h in Headers */ = {isa = PBXBuildFile; fileRef = B95141DC2233CB00009BA2E0 /* dyld_priv.h */; };
 		E8923DA5116AB2820071B552 /* objc-block-trampolines.mm in Sources */ = {isa = PBXBuildFile; fileRef = E8923DA0116AB2820071B552 /* objc-block-trampolines.mm */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AD0F6ECC238288E500AE92B9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D2AAC0620554660B00DB518D;
+			remoteInfo = objc;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		AD0F6EB123827FD300AE92B9 /* CopyFiles */ = {
@@ -211,6 +223,13 @@
 		AD0F6EBA23827FF800AE92B9 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		AD0F6EBB23827FF800AE92B9 /* Person.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Person.h; sourceTree = "<group>"; };
 		AD0F6EBC23827FF800AE92B9 /* Person.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Person.m; sourceTree = "<group>"; };
+		AD0F6EC1238283A700AE92B9 /* TestWeak.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TestWeak.h; sourceTree = "<group>"; };
+		AD0F6EC2238283A700AE92B9 /* TestWeak.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TestWeak.m; sourceTree = "<group>"; };
+		AD0F6EC52382843A00AE92B9 /* TestAlloc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TestAlloc.h; sourceTree = "<group>"; };
+		AD0F6EC62382843A00AE92B9 /* TestAlloc.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TestAlloc.m; sourceTree = "<group>"; };
+		AD0F6EC82382854300AE92B9 /* lldb查看内存.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "lldb查看内存.png"; sourceTree = "<group>"; };
+		AD0F6ECA2382859900AE92B9 /* alloc流程.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "alloc流程.png"; sourceTree = "<group>"; };
+		AD0F6ECB2382864100AE92B9 /* weak汇编.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "weak汇编.png"; sourceTree = "<group>"; };
 		B95141C92233CB00009BA2E0 /* CrashReporterClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CrashReporterClient.h; sourceTree = "<group>"; };
 		B95141CA2233CB00009BA2E0 /* isa.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = isa.h; sourceTree = "<group>"; };
 		B95141CB2233CB00009BA2E0 /* Block_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Block_private.h; sourceTree = "<group>"; };
@@ -421,11 +440,34 @@
 		AD0F6EB423827FD300AE92B9 /* test */ = {
 			isa = PBXGroup;
 			children = (
+				AD0F6EC82382854300AE92B9 /* lldb查看内存.png */,
+				AD0F6EC42382843100AE92B9 /* alloc */,
+				AD0F6EBF2382834D00AE92B9 /* weak */,
 				AD0F6EBA23827FF800AE92B9 /* main.m */,
 				AD0F6EBB23827FF800AE92B9 /* Person.h */,
 				AD0F6EBC23827FF800AE92B9 /* Person.m */,
 			);
 			path = test;
+			sourceTree = "<group>";
+		};
+		AD0F6EBF2382834D00AE92B9 /* weak */ = {
+			isa = PBXGroup;
+			children = (
+				AD0F6ECB2382864100AE92B9 /* weak汇编.png */,
+				AD0F6EC1238283A700AE92B9 /* TestWeak.h */,
+				AD0F6EC2238283A700AE92B9 /* TestWeak.m */,
+			);
+			path = weak;
+			sourceTree = "<group>";
+		};
+		AD0F6EC42382843100AE92B9 /* alloc */ = {
+			isa = PBXGroup;
+			children = (
+				AD0F6ECA2382859900AE92B9 /* alloc流程.png */,
+				AD0F6EC52382843A00AE92B9 /* TestAlloc.h */,
+				AD0F6EC62382843A00AE92B9 /* TestAlloc.m */,
+			);
+			path = alloc;
 			sourceTree = "<group>";
 		};
 		B95141C82233CB00009BA2E0 /* include */ = {
@@ -581,6 +623,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				AD0F6ECD238288E500AE92B9 /* PBXTargetDependency */,
 			);
 			name = test;
 			productName = test;
@@ -679,7 +722,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				AD0F6EBE23827FF900AE92B9 /* Person.m in Sources */,
+				AD0F6EC72382843A00AE92B9 /* TestAlloc.m in Sources */,
 				AD0F6EBD23827FF900AE92B9 /* main.m in Sources */,
+				AD0F6EC3238283A700AE92B9 /* TestWeak.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -733,6 +778,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AD0F6ECD238288E500AE92B9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D2AAC0620554660B00DB518D /* objc */;
+			targetProxy = AD0F6ECC238288E500AE92B9 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		1DEB914B08733D8E0010E9CD /* Debug */ = {

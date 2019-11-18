@@ -12,3 +12,8 @@ Apple 开源代码。
 
 [GCD源码吐血分析(1)——GCD Queue](https://blog.csdn.net/u013378438/article/details/81031938)
 [GCD源码吐血分析(2)——dispatch_async/dispatch_sync/dispatch_once/dispatch group](https://blog.csdn.net/u013378438/article/details/81076116)
+
+
+### 2. ObjC
+
+https://www.jianshu.com/p/113d3b5f0dee

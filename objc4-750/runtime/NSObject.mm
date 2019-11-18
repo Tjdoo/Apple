@@ -388,7 +388,7 @@ objc_storeWeakOrNil(id *location, id newObj)
 
 
 /** 
- * Initialize a fresh weak pointer to some object location. 
+ * Initialize a fresh weak pointer to some object location.    初始化指向某个对象位置的弱引用指针。
  * It would be used for code like: 
  *
  * (The nil case) 
@@ -397,8 +397,7 @@ objc_storeWeakOrNil(id *location, id newObj)
  * NSObject *o = ...;
  * __weak id weakPtr = o;
  * 
- * This function IS NOT thread-safe with respect to concurrent 
- * modifications to the weak variable. (Concurrent weak clear is safe.)
+ * This function IS NOT thread-safe with respect to concurrent  modifications to the weak variable. (Concurrent weak clear is safe.)
  *
  * @param location Address of __weak ptr. 
  * @param newObj Object ptr. 
