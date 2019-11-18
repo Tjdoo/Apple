@@ -9,4 +9,9 @@
 
 @implementation Person
 
++ (void)initialize
+{
+    NSLog(@"Person initialize");
+}
+
 @end
