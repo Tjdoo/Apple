@@ -268,7 +268,8 @@ struct ReleaseValue {
     }
 };
 
-void _object_set_associative_reference(id object, void *key, id value, uintptr_t policy) {
+void _object_set_associative_reference(id object, void *key, id value, uintptr_t policy)
+{
     // retain the new value (if any) outside the lock.
     ObjcAssociation old_association(0, nil);
     id new_value = value ? acquireValue(value, policy) : nil;

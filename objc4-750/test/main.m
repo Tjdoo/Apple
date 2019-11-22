@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "TestAlloc.h"
 #import "TestWeak.h"
+#import "TestAssociate.h"
 
 
 int sum(int a, int b) {
@@ -42,7 +43,8 @@ int main(int argc, const char * argv[]) {
         
         
 //        [TestAlloc dowork];
-        [TestWeak  dowork];
+//        [TestWeak  dowork];
+        [TestAssociate dowork];
     }
     return 0;
 }

@@ -1980,6 +1980,9 @@ void arr_init(void)
     return self;
 }
 
+/**
+  *  @brief
+  */
 + (Class)class {
     return self;
 }
@@ -2004,20 +2007,28 @@ void arr_init(void)
     return [self class] == cls;
 }
 
-+ (BOOL)isKindOfClass:(Class)cls {
++ (BOOL)isKindOfClass:(Class)cls
+{
     for (Class tcls = object_getClass((id)self); tcls; tcls = tcls->superclass) {
         if (tcls == cls) return YES;
     }
     return NO;
 }
 
-- (BOOL)isKindOfClass:(Class)cls {
+/**
+  *  @brief   从自身开始向上查找
+  */
+- (BOOL)isKindOfClass:(Class)cls
+{
     for (Class tcls = [self class]; tcls; tcls = tcls->superclass) {
         if (tcls == cls) return YES;
     }
     return NO;
 }
 
+/**
+ *  @brief   从自身开始向上查找
+ */
 + (BOOL)isSubclassOfClass:(Class)cls {
     for (Class tcls = self; tcls; tcls = tcls->superclass) {
         if (tcls == cls) return YES;

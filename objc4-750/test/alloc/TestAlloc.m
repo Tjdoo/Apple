@@ -52,6 +52,16 @@
     //        NSLog(@"height：%f", p.height);
     
     p.age1 = 0xcccccccc;
+    
+//    NSLog(@"%@", NSStringFromClass(p->isa));
+    
+    if ([p isKindOfClass:[Person class]]) {
+        
+    }
+    
+    if ([p isMemberOfClass:[Person class]]) {
+        
+    }
 }
 
 @end

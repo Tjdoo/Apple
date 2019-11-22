@@ -72,8 +72,6 @@
 		838486250D6D68F000CEA253 /* List.m in Sources */ = {isa = PBXBuildFile; fileRef = 838486230D6D68F000CEA253 /* List.m */; };
 		838486260D6D68F000CEA253 /* List.h in Headers */ = {isa = PBXBuildFile; fileRef = 838486240D6D68F000CEA253 /* List.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		838486280D6D6A2400CEA253 /* message.h in Headers */ = {isa = PBXBuildFile; fileRef = 838485BD0D6D687300CEA253 /* message.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		83A4AEDC1EA0840800ACADDE /* module.modulemap in Headers */ = {isa = PBXBuildFile; fileRef = 83A4AED71EA06D9D00ACADDE /* module.modulemap */; settings = {ATTRIBUTES = (Public, ); }; };
-		83A4AEDE1EA08C7200ACADDE /* ObjectiveC.apinotes in Headers */ = {isa = PBXBuildFile; fileRef = 83A4AEDD1EA08C5700ACADDE /* ObjectiveC.apinotes */; settings = {ATTRIBUTES = (Public, ); }; };
 		83B1A8BE0FF1AC0D0019EA5B /* objc-msg-simulator-i386.s in Sources */ = {isa = PBXBuildFile; fileRef = 83B1A8BC0FF1AC0D0019EA5B /* objc-msg-simulator-i386.s */; };
 		83BE02E40FCCB23400661494 /* objc-file-old.mm in Sources */ = {isa = PBXBuildFile; fileRef = 83BE02E30FCCB23400661494 /* objc-file-old.mm */; };
 		83BE02E80FCCB24D00661494 /* objc-file-old.h in Headers */ = {isa = PBXBuildFile; fileRef = 83BE02E50FCCB24D00661494 /* objc-file-old.h */; };
@@ -91,6 +89,7 @@
 		AD0F6EBE23827FF900AE92B9 /* Person.m in Sources */ = {isa = PBXBuildFile; fileRef = AD0F6EBC23827FF800AE92B9 /* Person.m */; };
 		AD0F6EC3238283A700AE92B9 /* TestWeak.m in Sources */ = {isa = PBXBuildFile; fileRef = AD0F6EC2238283A700AE92B9 /* TestWeak.m */; };
 		AD0F6EC72382843A00AE92B9 /* TestAlloc.m in Sources */ = {isa = PBXBuildFile; fileRef = AD0F6EC62382843A00AE92B9 /* TestAlloc.m */; };
+		ADBFB3512384355F00557E0F /* TestAssociate.m in Sources */ = {isa = PBXBuildFile; fileRef = ADBFB3502384355F00557E0F /* TestAssociate.m */; };
 		B95141DD2233CB00009BA2E0 /* CrashReporterClient.h in Headers */ = {isa = PBXBuildFile; fileRef = B95141C92233CB00009BA2E0 /* CrashReporterClient.h */; };
 		B95141DE2233CB00009BA2E0 /* isa.h in Headers */ = {isa = PBXBuildFile; fileRef = B95141CA2233CB00009BA2E0 /* isa.h */; };
 		B95141DF2233CB00009BA2E0 /* Block_private.h in Headers */ = {isa = PBXBuildFile; fileRef = B95141CB2233CB00009BA2E0 /* Block_private.h */; };
@@ -109,7 +108,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		AD0F6ECC238288E500AE92B9 /* PBXContainerItemProxy */ = {
+		ADBFB3612385069C00557E0F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
 			proxyType = 1;
@@ -230,6 +229,13 @@
 		AD0F6EC82382854300AE92B9 /* lldb查看内存.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "lldb查看内存.png"; sourceTree = "<group>"; };
 		AD0F6ECA2382859900AE92B9 /* alloc流程.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "alloc流程.png"; sourceTree = "<group>"; };
 		AD0F6ECB2382864100AE92B9 /* weak汇编.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "weak汇编.png"; sourceTree = "<group>"; };
+		AD0F6F2C23838E5700AE92B9 /* libSystem.B.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libSystem.B.dylib; path = ../../../../../../usr/lib/libSystem.B.dylib; sourceTree = "<group>"; };
+		AD0F6F772383E4EE00AE92B9 /* libobjc.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libobjc.tbd; path = usr/lib/libobjc.tbd; sourceTree = SDKROOT; };
+		AD0F6F792383E50300AE92B9 /* libSystem.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libSystem.tbd; path = usr/lib/libSystem.tbd; sourceTree = SDKROOT; };
+		ADBFB34D2384353C00557E0F /* Association_2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Association_2.png; sourceTree = "<group>"; };
+		ADBFB34E2384353C00557E0F /* Association_1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Association_1.png; sourceTree = "<group>"; };
+		ADBFB34F2384355F00557E0F /* TestAssociate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TestAssociate.h; sourceTree = "<group>"; };
+		ADBFB3502384355F00557E0F /* TestAssociate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TestAssociate.m; sourceTree = "<group>"; };
 		B95141C92233CB00009BA2E0 /* CrashReporterClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CrashReporterClient.h; sourceTree = "<group>"; };
 		B95141CA2233CB00009BA2E0 /* isa.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = isa.h; sourceTree = "<group>"; };
 		B95141CB2233CB00009BA2E0 /* Block_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Block_private.h; sourceTree = "<group>"; };
@@ -443,6 +449,7 @@
 				AD0F6EC82382854300AE92B9 /* lldb查看内存.png */,
 				AD0F6EC42382843100AE92B9 /* alloc */,
 				AD0F6EBF2382834D00AE92B9 /* weak */,
+				ADBFB34C2384351B00557E0F /* Associate */,
 				AD0F6EBA23827FF800AE92B9 /* main.m */,
 				AD0F6EBB23827FF800AE92B9 /* Person.h */,
 				AD0F6EBC23827FF800AE92B9 /* Person.m */,
@@ -468,6 +475,17 @@
 				AD0F6EC62382843A00AE92B9 /* TestAlloc.m */,
 			);
 			path = alloc;
+			sourceTree = "<group>";
+		};
+		ADBFB34C2384351B00557E0F /* Associate */ = {
+			isa = PBXGroup;
+			children = (
+				ADBFB34E2384353C00557E0F /* Association_1.png */,
+				ADBFB34D2384353C00557E0F /* Association_2.png */,
+				ADBFB34F2384355F00557E0F /* TestAssociate.h */,
+				ADBFB3502384355F00557E0F /* TestAssociate.m */,
+			);
+			path = Associate;
 			sourceTree = "<group>";
 		};
 		B95141C82233CB00009BA2E0 /* include */ = {
@@ -542,6 +560,9 @@
 		F9BCC72A205C6A1600DD9AFC /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				AD0F6F792383E50300AE92B9 /* libSystem.tbd */,
+				AD0F6F772383E4EE00AE92B9 /* libobjc.tbd */,
+				AD0F6F2C23838E5700AE92B9 /* libSystem.B.dylib */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -553,9 +574,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				83A4AEDE1EA08C7200ACADDE /* ObjectiveC.apinotes in Headers */,
 				75A95051202BAA9A00D7D56F /* objc-locks.h in Headers */,
-				83A4AEDC1EA0840800ACADDE /* module.modulemap in Headers */,
 				830F2A980D738DC200392440 /* hashtable.h in Headers */,
 				838485BF0D6D687300CEA253 /* hashtable2.h in Headers */,
 				838486260D6D68F000CEA253 /* List.h in Headers */,
@@ -623,7 +642,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				AD0F6ECD238288E500AE92B9 /* PBXTargetDependency */,
+				ADBFB3622385069C00557E0F /* PBXTargetDependency */,
 			);
 			name = test;
 			productName = test;
@@ -722,6 +741,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AD0F6EBE23827FF900AE92B9 /* Person.m in Sources */,
+				ADBFB3512384355F00557E0F /* TestAssociate.m in Sources */,
 				AD0F6EC72382843A00AE92B9 /* TestAlloc.m in Sources */,
 				AD0F6EBD23827FF900AE92B9 /* main.m in Sources */,
 				AD0F6EC3238283A700AE92B9 /* TestWeak.m in Sources */,
@@ -780,10 +800,10 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		AD0F6ECD238288E500AE92B9 /* PBXTargetDependency */ = {
+		ADBFB3622385069C00557E0F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = D2AAC0620554660B00DB518D /* objc */;
-			targetProxy = AD0F6ECC238288E500AE92B9 /* PBXContainerItemProxy */;
+			targetProxy = ADBFB3612385069C00557E0F /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -791,7 +811,7 @@
 		1DEB914B08733D8E0010E9CD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				ARCHS = "$(ARCHS_STANDARD)";
 				COPY_HEADERS_RUN_UNIFDEF = YES;
 				COPY_HEADERS_UNIFDEF_FLAGS = "-UBUILD_FOR_OSX";
 				"COPY_HEADERS_UNIFDEF_FLAGS[sdk=macosx*]" = "-DBUILD_FOR_OSX";
@@ -815,6 +835,7 @@
 				);
 				INSTALL_PATH = /usr/lib;
 				IS_ZIPPERED = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				ORDER_FILE = "${SRCROOT}/libobjc.order";
 				"ORDER_FILE[sdk=iphonesimulator*]" = "";
 				OTHER_CFLAGS = (
@@ -891,6 +912,7 @@
 				);
 				INSTALL_PATH = /usr/lib;
 				IS_ZIPPERED = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				ORDER_FILE = "${SRCROOT}/libobjc.order";
 				"ORDER_FILE[sdk=iphonesimulator*]" = "";
 				OTHER_CFLAGS = (
@@ -974,12 +996,14 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_SHADOW = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				OTHER_CFLAGS = "";
 				"OTHER_CFLAGS[arch=x86_64]" = "-fobjc-legacy-dispatch";
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(OTHER_CFLAGS)",
 					"-D_LIBCPP_VISIBLE=\"\"",
 				);
+				SDKROOT = macosx;
 				WARNING_CFLAGS = (
 					"-Wall",
 					"-Wextra",
@@ -1017,6 +1041,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_SHADOW = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				"OTHER_CFLAGS[arch=i386]" = "-momit-leaf-frame-pointer";
 				"OTHER_CFLAGS[arch=x86_64]" = (
 					"-momit-leaf-frame-pointer",
@@ -1026,6 +1051,7 @@
 					"$(OTHER_CFLAGS)",
 					"-D_LIBCPP_VISIBLE=\"\"",
 				);
+				SDKROOT = macosx;
 				WARNING_CFLAGS = (
 					"-Wall",
 					"-Wextra",
@@ -1071,9 +1097,8 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = NO;
 				ENABLE_TESTABILITY = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -1084,12 +1109,13 @@
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				VALID_ARCHS = x86_64;
 			};
 			name = Debug;
 		};
@@ -1127,18 +1153,18 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
+				ENABLE_STRICT_OBJC_MSGSEND = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				VALID_ARCHS = x86_64;
 			};
 			name = Release;
 		};

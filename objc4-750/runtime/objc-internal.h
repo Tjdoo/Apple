@@ -411,6 +411,9 @@ _objc_makeTaggedPointer(objc_tag_index_t tag, uintptr_t value)
     }
 }
 
+/**
+  *  @brief   判断当前类是否是 TaggedPointer（标记指针）
+  */
 static inline bool 
 _objc_isTaggedPointer(const void * _Nullable ptr)
 {

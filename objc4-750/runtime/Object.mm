@@ -30,8 +30,8 @@
 #undef id
 #undef Class
 
-typedef struct objc_class *Class;
-typedef struct objc_object *id;
+typedef struct objc_class *Class; // 结构体指针
+typedef struct objc_object *id;   // 结构体指针
 
 #if __OBJC2__
 

@@ -76,6 +76,7 @@ objc_object::isClass()
 inline Class 
 objc_object::getIsa() 
 {
+    // 不是 Tagged Pointer（标记指针）-》ISA()
     if (!isTaggedPointer()) return ISA();
 
     uintptr_t ptr = (uintptr_t)this;
@@ -151,7 +152,9 @@ objc_object::isExtTaggedPointer()
 inline Class 
 objc_object::ISA() 
 {
-    assert(!isTaggedPointer()); 
+    // 非 TaggedPointer（标记指针），触发断言
+    assert(!isTaggedPointer());
+    
 #if SUPPORT_INDEXED_ISA
     if (isa.nonpointer) {
         uintptr_t slot = isa.indexcls;
