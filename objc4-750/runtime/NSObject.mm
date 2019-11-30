@@ -632,6 +632,9 @@ struct magic_t {
 };
     
 
+/**
+  *  @discussion   自动释放池就是一个以 AutoreleasePoolPage 为节点的双向链表
+  */
 class AutoreleasePoolPage 
 {
     // EMPTY_POOL_PLACEHOLDER is stored in TLS when exactly one pool is 
@@ -651,26 +654,33 @@ class AutoreleasePoolPage
 #endif
     static size_t const COUNT = SIZE / sizeof(id);
 
-    magic_t const magic;
-    id *next;
-    pthread_t const thread;
-    AutoreleasePoolPage * const parent;
-    AutoreleasePoolPage *child;
-    uint32_t const depth;
-    uint32_t hiwat;
+    magic_t const magic;  // 校验 AutoreleasePoolPage 的结构是否完整
+    id *next;  // 指向栈顶，也就是最新入栈的 autorelease 对象的下一个位置（当前可插入对象的地址）
+    pthread_t const thread;  // 当前 page 所对应的线程
+    AutoreleasePoolPage * const parent; // 指向前驱的指针
+    AutoreleasePoolPage *child;  // 指向后继的指针
+    uint32_t const depth;  // 链表的深度，也就是链表节点的个数
+    uint32_t hiwat;  // high water mark（最高水位标记）
 
     // SIZE-sizeof(*this) bytes of contents follow
 
+    /** 重写了 new 运算符，使用了 malloc_zone_memalign() 进行内存分配   */
     static void * operator new(size_t size) {
+        // 以 alignment 对齐的地址分配 size 的内存空间。调用时两个参数都使用了 SIZE 宏，实际上就是虚拟内存页的大小
+        // SIZE -》PAGE_MAX_SIZE -》PAGE_SIZE -》I386_PGBYTES        4096        /* bytes per 80386 page */
+        // 一个 page 的内存空间设置过小会导致更多的开辟空间操作降低效率，大量的 parent/child 指针变量也会占用可观的内存；空间设置过大可能会导致一个 page 的利用率低浪费过多内存。设置为 4096 是比较考究的，在保证内存对齐的情况下最大化利用空间避免内存碎片。这么做过后 page 的地址总是 4096 的整数倍，可以让某些运算更便捷（比如通过指针地址寻找对应的 page）。
         return malloc_zone_memalign(malloc_default_zone(), SIZE, SIZE);
     }
+    
     static void operator delete(void * p) {
         return free(p);
     }
 
+    /**  unprotect()/protect()内部使用了 int mprotect(void *a, size_t b, int c)，设置内存起点 a 长度 b 的内存区域为 c 类型的访问限制  */
     inline void protect() {
+        // 保证 page 写安全。目前 #define PROTECT_AUTORELEASEPOOL 0 说明目前版本还没有开放这个保护功能。
 #if PROTECT_AUTORELEASEPOOL
-        mprotect(this, SIZE, PROT_READ);
+        mprotect(this, SIZE, PROT_READ);  // 只读
         check();
 #endif
     }
@@ -678,11 +688,11 @@ class AutoreleasePoolPage
     inline void unprotect() {
 #if PROTECT_AUTORELEASEPOOL
         check();
-        mprotect(this, SIZE, PROT_READ | PROT_WRITE);
+        mprotect(this, SIZE, PROT_READ | PROT_WRITE); // 可读可写
 #endif
     }
 
-    AutoreleasePoolPage(AutoreleasePoolPage *newParent) 
+    AutoreleasePoolPage(AutoreleasePoolPage *newParent)
         : magic(), next(begin()), thread(pthread_self()),
           parent(newParent), child(nil), 
           depth(parent ? 1+parent->depth : 0), 
@@ -743,15 +753,20 @@ class AutoreleasePoolPage
 #endif
     }
 
-
+    /** AutoreleasePoolPage 本身的大小远不及 4096，而超出的空间正是用来存放“期望被自动管理的对象”。begin() 和 end() 方法标记了这个范围 */
     id * begin() {
+        // sizeof(*this) 表示：AutoreleasePoolPage 本身的大小
+        // (uint8_t *)this+sizeof(*this) 就是最低地址
         return (id *) ((uint8_t *)this+sizeof(*this));
     }
 
     id * end() {
+        // (uint8_t *)this+SIZE 就是最高地址
         return (id *) ((uint8_t *)this+SIZE);
     }
 
+    /*  逐个插入对象时，next 指针从 begin() 到 end() 逐个移动。full() 方法就是指 next == end()，empty() 就是指 next == begin()。  */
+    
     bool empty() {
         return next == begin();
     }
@@ -764,12 +779,13 @@ class AutoreleasePoolPage
         return (next - begin() < (end() - begin()) / 2);
     }
 
+    /**   当 page 存在且没满时，直接添加对象   */
     id *add(id obj)
     {
         assert(!full());
         unprotect();
         id *ret = next;  // faster than `return next-1` because of aliasing
-        *next++ = obj;
+        *next++ = obj; // next/end()/begin() 等都是 id *类型的，即指向指针的指针，进行 +1 -1 运算时移动的是一个 id 大小的距离。
         protect();
         return ret;
     }
@@ -890,12 +906,19 @@ class AutoreleasePoolPage
         return EMPTY_POOL_PLACEHOLDER;
     }
 
+    /**  被自动管理的对象会不断插入双向链表，hotPage() 就是指向从前到后第一个未满的 page  */
     static inline AutoreleasePoolPage *hotPage() 
     {
-        AutoreleasePoolPage *result = (AutoreleasePoolPage *)
-            tls_get_direct(key);
-        if ((id *)result == EMPTY_POOL_PLACEHOLDER) return nil;
-        if (result) result->fastcheck();
+        //  tls_get_direct() 和 tls_set_direct() 内部就是使用线程的局部存储（TLS: Thread Local Storage）将 page 存储起来，这样可以避免维护额外的空间来记录尾部的 page。由此也验证了自动释放池与线程一一对应的关系。
+        AutoreleasePoolPage *result = (AutoreleasePoolPage *)tls_get_direct(key);
+        
+        // EMPTY_POOL_PLACEHOLDER 表示没有 page
+        if ((id *)result == EMPTY_POOL_PLACEHOLDER)
+            return nil;
+        
+        if (result)
+            result->fastcheck();
+        
         return result;
     }
 
@@ -920,16 +943,24 @@ class AutoreleasePoolPage
 
     static inline id *autoreleaseFast(id obj)
     {
+        // hotPage 指的是当前可插入对象的 page
         AutoreleasePoolPage *page = hotPage();
+        
+        // 当 page 存在且没满时，直接添加对象
         if (page && !page->full()) {
             return page->add(obj);
-        } else if (page) {
+        }
+        // 当 page 满了
+        else if (page) {
             return autoreleaseFullPage(obj, page);
-        } else {
+        }
+        // page 不存在
+        else {
             return autoreleaseNoPage(obj);
         }
     }
-
+    
+    /**   page 已满时  */
     static __attribute__((noinline))
     id *autoreleaseFullPage(id obj, AutoreleasePoolPage *page)
     {
@@ -939,15 +970,20 @@ class AutoreleasePoolPage
         assert(page == hotPage());
         assert(page->full()  ||  DebugPoolAllocation);
 
+        // 循环的逻辑：从 child 方向寻找未满的 page，若找不到则创建一个新 page 拼接到链表尾部（AutoreleasePoolPage 构造方法会把传入的 page 参数作为 parent 前驱对象）。后面再设置最新的 page 为 hotpage 并将 obj 添加进 page。
         do {
-            if (page->child) page = page->child;
-            else page = new AutoreleasePoolPage(page);
+            if (page->child)
+                page = page->child;
+            else
+                page = new AutoreleasePoolPage(page);
+            
         } while (page->full());
 
         setHotPage(page);
         return page->add(obj);
     }
 
+    /**  page 不存在时   */
     static __attribute__((noinline))
     id *autoreleaseNoPage(id obj)
     {
@@ -984,6 +1020,7 @@ class AutoreleasePoolPage
         // We are pushing an object or a non-placeholder'd pool.
 
         // Install the first page.
+        // 创建第一个 page 然后加入线程局部存储
         AutoreleasePoolPage *page = new AutoreleasePoolPage(nil);
         setHotPage(page);
         
@@ -1015,14 +1052,16 @@ public:
         return obj;
     }
 
-
+    /**  入栈   */
     static inline void *push() 
     {
         id *dest;
+        // #   define POOL_BOUNDARY nil
         if (DebugPoolAllocation) {
             // Each autorelease pool starts on a new pool page.
             dest = autoreleaseNewPage(POOL_BOUNDARY);
-        } else {
+        }
+        else {
             dest = autoreleaseFast(POOL_BOUNDARY);
         }
         assert(dest == EMPTY_POOL_PLACEHOLDER || *dest == POOL_BOUNDARY);
@@ -1054,6 +1093,7 @@ public:
         objc_autoreleasePoolInvalid(token);
     }
     
+    /**   出栈   */
     static inline void pop(void *token) 
     {
         AutoreleasePoolPage *page;
@@ -1826,12 +1866,19 @@ _objc_rootHash(id obj)
     return (uintptr_t)obj;
 }
 
+/**
+  *  @brief   自动释放池压栈。
+  *  @discussion   主线程以及非显式创建的线程（比如 GCD）都会有一个 event loop (RunLoop 就是具体实现)，在 loop 的每一个循环周期的开始和结束会分别调用自动释放池的 push 和 pop 方法，由此来实现自动的内存管理。
+  */
 void *
 objc_autoreleasePoolPush(void)
 {
     return AutoreleasePoolPage::push();
 }
 
+/**
+  *  @brief   自动释放池推栈
+  */
 void
 objc_autoreleasePoolPop(void *ctxt)
 {
@@ -1981,7 +2028,7 @@ void arr_init(void)
 }
 
 /**
-  *  @brief
+  *  @brief   返回类对象
   */
 + (Class)class {
     return self;
@@ -1991,6 +2038,9 @@ void arr_init(void)
     return object_getClass(self);
 }
 
+/**
+  *  @brief   返回父类对象
+  */
 + (Class)superclass {
     return self->superclass;
 }
@@ -1999,6 +2049,9 @@ void arr_init(void)
     return [self class]->superclass;
 }
 
+/**
+  *  @brief   isMemberOfClass: 采用的 == 判断，所以只判断是否当前类对象
+  */
 + (BOOL)isMemberOfClass:(Class)cls {
     return object_getClass((id)self) == cls;
 }
@@ -2082,6 +2135,9 @@ void arr_init(void)
     return _objc_rootHash(self);
 }
 
+/**
+  *  @brief   判断使用的  ==，所以是比较两个指针地址是否相同
+  */
 + (BOOL)isEqual:(id)obj {
     return obj == (id)self;
 }
@@ -2301,6 +2357,9 @@ void arr_init(void)
     return ((id)self)->rootRetainCount();
 }
 
+/**
+  *  @brief   alloc -》_objc_rootAlloc -》callAlloc -》class_createInstance -》_class_createInstanceFromZone
+  */
 + (id)alloc {
     return _objc_rootAlloc(self);
 }
@@ -2311,6 +2370,9 @@ void arr_init(void)
 }
 
 // Replaced by CF (throws an NSException)
+/**
+  *  @brief   NSObject 中默认仅是返回自身，没有其他操作
+  */
 + (id)init {
     return (id)self;
 }

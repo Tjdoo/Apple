@@ -90,6 +90,7 @@
 		AD0F6EC3238283A700AE92B9 /* TestWeak.m in Sources */ = {isa = PBXBuildFile; fileRef = AD0F6EC2238283A700AE92B9 /* TestWeak.m */; };
 		AD0F6EC72382843A00AE92B9 /* TestAlloc.m in Sources */ = {isa = PBXBuildFile; fileRef = AD0F6EC62382843A00AE92B9 /* TestAlloc.m */; };
 		ADBFB3512384355F00557E0F /* TestAssociate.m in Sources */ = {isa = PBXBuildFile; fileRef = ADBFB3502384355F00557E0F /* TestAssociate.m */; };
+		ADE6D2D7238D6F8F00C531A9 /* TestAutoreleasepool.m in Sources */ = {isa = PBXBuildFile; fileRef = ADE6D2D6238D6F8F00C531A9 /* TestAutoreleasepool.m */; };
 		B95141DD2233CB00009BA2E0 /* CrashReporterClient.h in Headers */ = {isa = PBXBuildFile; fileRef = B95141C92233CB00009BA2E0 /* CrashReporterClient.h */; };
 		B95141DE2233CB00009BA2E0 /* isa.h in Headers */ = {isa = PBXBuildFile; fileRef = B95141CA2233CB00009BA2E0 /* isa.h */; };
 		B95141DF2233CB00009BA2E0 /* Block_private.h in Headers */ = {isa = PBXBuildFile; fileRef = B95141CB2233CB00009BA2E0 /* Block_private.h */; };
@@ -232,10 +233,17 @@
 		AD0F6F2C23838E5700AE92B9 /* libSystem.B.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libSystem.B.dylib; path = ../../../../../../usr/lib/libSystem.B.dylib; sourceTree = "<group>"; };
 		AD0F6F772383E4EE00AE92B9 /* libobjc.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libobjc.tbd; path = usr/lib/libobjc.tbd; sourceTree = SDKROOT; };
 		AD0F6F792383E50300AE92B9 /* libSystem.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libSystem.tbd; path = usr/lib/libSystem.tbd; sourceTree = SDKROOT; };
+		AD2227B6238FD1EC001FB83F /* TestAlloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TestAlloc.cpp; sourceTree = "<group>"; };
+		AD2227FD238FE9E3001FB83F /* AutoreleasePoolPage.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AutoreleasePoolPage.png; sourceTree = "<group>"; };
+		AD2227FE238FE9E3001FB83F /* Push.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Push.png; sourceTree = "<group>"; };
+		AD2227FF238FE9E3001FB83F /* Pop.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Pop.png; sourceTree = "<group>"; };
 		ADBFB34D2384353C00557E0F /* Association_2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Association_2.png; sourceTree = "<group>"; };
 		ADBFB34E2384353C00557E0F /* Association_1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Association_1.png; sourceTree = "<group>"; };
 		ADBFB34F2384355F00557E0F /* TestAssociate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TestAssociate.h; sourceTree = "<group>"; };
 		ADBFB3502384355F00557E0F /* TestAssociate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TestAssociate.m; sourceTree = "<group>"; };
+		ADE6D2D5238D6F8F00C531A9 /* TestAutoreleasepool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TestAutoreleasepool.h; sourceTree = "<group>"; };
+		ADE6D2D6238D6F8F00C531A9 /* TestAutoreleasepool.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TestAutoreleasepool.m; sourceTree = "<group>"; };
+		ADE6D2D8238D701A00C531A9 /* TestAutoreleasepool.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TestAutoreleasepool.cpp; sourceTree = "<group>"; };
 		B95141C92233CB00009BA2E0 /* CrashReporterClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CrashReporterClient.h; sourceTree = "<group>"; };
 		B95141CA2233CB00009BA2E0 /* isa.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = isa.h; sourceTree = "<group>"; };
 		B95141CB2233CB00009BA2E0 /* Block_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Block_private.h; sourceTree = "<group>"; };
@@ -450,6 +458,7 @@
 				AD0F6EC42382843100AE92B9 /* alloc */,
 				AD0F6EBF2382834D00AE92B9 /* weak */,
 				ADBFB34C2384351B00557E0F /* Associate */,
+				ADE6D2D4238D6F2800C531A9 /* Autoreleasepool */,
 				AD0F6EBA23827FF800AE92B9 /* main.m */,
 				AD0F6EBB23827FF800AE92B9 /* Person.h */,
 				AD0F6EBC23827FF800AE92B9 /* Person.m */,
@@ -470,6 +479,7 @@
 		AD0F6EC42382843100AE92B9 /* alloc */ = {
 			isa = PBXGroup;
 			children = (
+				AD2227B6238FD1EC001FB83F /* TestAlloc.cpp */,
 				AD0F6ECA2382859900AE92B9 /* alloc流程.png */,
 				AD0F6EC52382843A00AE92B9 /* TestAlloc.h */,
 				AD0F6EC62382843A00AE92B9 /* TestAlloc.m */,
@@ -487,6 +497,20 @@
 			);
 			path = Associate;
 			sourceTree = "<group>";
+		};
+		ADE6D2D4238D6F2800C531A9 /* Autoreleasepool */ = {
+			isa = PBXGroup;
+			children = (
+				AD2227FD238FE9E3001FB83F /* AutoreleasePoolPage.png */,
+				AD2227FE238FE9E3001FB83F /* Push.png */,
+				AD2227FF238FE9E3001FB83F /* Pop.png */,
+				ADE6D2D8238D701A00C531A9 /* TestAutoreleasepool.cpp */,
+				ADE6D2D5238D6F8F00C531A9 /* TestAutoreleasepool.h */,
+				ADE6D2D6238D6F8F00C531A9 /* TestAutoreleasepool.m */,
+			);
+			name = Autoreleasepool;
+			path = test/Autoreleasepool;
+			sourceTree = SOURCE_ROOT;
 		};
 		B95141C82233CB00009BA2E0 /* include */ = {
 			isa = PBXGroup;
@@ -742,6 +766,7 @@
 			files = (
 				AD0F6EBE23827FF900AE92B9 /* Person.m in Sources */,
 				ADBFB3512384355F00557E0F /* TestAssociate.m in Sources */,
+				ADE6D2D7238D6F8F00C531A9 /* TestAutoreleasepool.m in Sources */,
 				AD0F6EC72382843A00AE92B9 /* TestAlloc.m in Sources */,
 				AD0F6EBD23827FF900AE92B9 /* main.m in Sources */,
 				AD0F6EC3238283A700AE92B9 /* TestWeak.m in Sources */,
@@ -835,7 +860,7 @@
 				);
 				INSTALL_PATH = /usr/lib;
 				IS_ZIPPERED = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				ORDER_FILE = "${SRCROOT}/libobjc.order";
 				"ORDER_FILE[sdk=iphonesimulator*]" = "";
 				OTHER_CFLAGS = (
@@ -912,7 +937,7 @@
 				);
 				INSTALL_PATH = /usr/lib;
 				IS_ZIPPERED = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				ORDER_FILE = "${SRCROOT}/libobjc.order";
 				"ORDER_FILE[sdk=iphonesimulator*]" = "";
 				OTHER_CFLAGS = (
@@ -1109,7 +1134,7 @@
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -1159,7 +1184,7 @@
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

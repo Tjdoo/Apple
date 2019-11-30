@@ -229,6 +229,10 @@ static int logging_use_compaction = 1; // set this to zero to always disable com
 
 // We set malloc_logger to NULL to disable logging, if we encounter errors
 // during file writing
+/**
+  *  @discussion   当 malloc_logger 和 __syscall_logger 函数指针不为空时，malloc/free、vm_allocate/vm_deallocate 等内存分配/释放通过这两个指针通知上层，这也是内存调试工具 malloc stack 的实现原理。有了这两个函数指针，我们很容易记录当前存活对象的内存分配信息（包括分配大小和分配堆栈）。
+  *  @see   https://cloud.tencent.com/developer/article/1048715
+  */
 typedef void (malloc_logger_t)(uint32_t type, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3, uintptr_t result, uint32_t num_hot_frames_to_skip);
 extern malloc_logger_t *malloc_logger;
 

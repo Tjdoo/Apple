@@ -53,7 +53,7 @@ OBJC_EXPORT
 @interface NSObject <NSObject> {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wobjc-interface-ivars"
-    Class isa  OBJC_ISA_AVAILABILITY;
+    Class isa  OBJC_ISA_AVAILABILITY;  // 只有一个 isa
 #pragma clang diagnostic pop
 }
 

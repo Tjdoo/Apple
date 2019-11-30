@@ -12,7 +12,7 @@
 + (void)dowork
 {
     NSObject * objc = [[NSObject alloc] init];
-    id __weak objc2 = objc;
+    id __weak objc2 = objc; // 底层调用 objc_initWeak()
     id __strong objc3 = objc;
     
 }

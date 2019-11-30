@@ -177,7 +177,7 @@
 * Locking: None. If you add locking, tell gdb (rdar://7516456).
 **********************************************************************/
 /**
-  *  @brief   返回 isa
+  *  @brief   返回 isa，即类对象
   */
 Class object_getClass(id obj)
 {

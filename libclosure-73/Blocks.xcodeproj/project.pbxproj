@@ -28,6 +28,7 @@
 		831D5ADA122788D500E4A1EC /* runtime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E86E1EC211543C0B0055083F /* runtime.cpp */; };
 		96EF759B1507C27500581A2E /* data.c in Sources */ = {isa = PBXBuildFile; fileRef = E86E1EC111543C0B0055083F /* data.c */; };
 		96EF759C1507C27500581A2E /* runtime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E86E1EC211543C0B0055083F /* runtime.cpp */; };
+		AD970328238BCE99002957EB /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = AD970327238BCE99002957EB /* main.c */; };
 		E86E1EC311543C0B0055083F /* Block_private.h in Headers */ = {isa = PBXBuildFile; fileRef = E86E1EBF11543C0B0055083F /* Block_private.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		E86E1EC411543C0B0055083F /* Block.h in Headers */ = {isa = PBXBuildFile; fileRef = E86E1EC011543C0B0055083F /* Block.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		E86E1EC511543C0B0055083F /* data.c in Sources */ = {isa = PBXBuildFile; fileRef = E86E1EC111543C0B0055083F /* data.c */; };
@@ -54,6 +55,10 @@
 /* Begin PBXFileReference section */
 		831D5ADF122788D500E4A1EC /* libclosure.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libclosure.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		96EF75961507C1CE00581A2E /* libclosure.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libclosure.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		AD970322238BCE99002957EB /* control */ = {isa = PBXFileReference; lastKnownFileType = text; name = control; path = Package/DEBIAN/control; sourceTree = "<group>"; };
+		AD970323238BCE99002957EB /* monkeydev.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = monkeydev.entitlements; sourceTree = "<group>"; };
+		AD970326238BCE99002957EB /* 0xdeadfa11 */ = {isa = PBXFileReference; lastKnownFileType = text; name = 0xdeadfa11; path = Package/usr/bin/0xdeadfa11; sourceTree = "<group>"; };
+		AD970327238BCE99002957EB /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		D2AAC0C705546C1D00DB518D /* libsystem_blocks.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libsystem_blocks.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		E86E1EBF11543C0B0055083F /* Block_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Block_private.h; sourceTree = "<group>"; };
 		E86E1EC011543C0B0055083F /* Block.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Block.h; sourceTree = "<group>"; };
@@ -70,6 +75,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		96EF75931507C1CE00581A2E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AD97031C238BCE98002957EB /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -101,6 +113,7 @@
 			children = (
 				08FB77AEFE84172EC02AAC07 /* Sources */,
 				32C88DFF0371C24200C91783 /* Headers */,
+				AD97031F238BCE98002957EB /* Test */,
 				034768DFFF38A50411DB9C8B /* Products */,
 			);
 			name = Blocks;
@@ -122,6 +135,49 @@
 				E86E1EC011543C0B0055083F /* Block.h */,
 			);
 			name = Headers;
+			sourceTree = "<group>";
+		};
+		AD97031F238BCE98002957EB /* Test */ = {
+			isa = PBXGroup;
+			children = (
+				AD970323238BCE99002957EB /* monkeydev.entitlements */,
+				AD970327238BCE99002957EB /* main.c */,
+				AD970320238BCE99002957EB /* Package */,
+			);
+			path = Test;
+			sourceTree = "<group>";
+		};
+		AD970320238BCE99002957EB /* Package */ = {
+			isa = PBXGroup;
+			children = (
+				AD970321238BCE99002957EB /* DEBIAN */,
+				AD970324238BCE99002957EB /* usr */,
+			);
+			name = Package;
+			sourceTree = "<group>";
+		};
+		AD970321238BCE99002957EB /* DEBIAN */ = {
+			isa = PBXGroup;
+			children = (
+				AD970322238BCE99002957EB /* control */,
+			);
+			name = DEBIAN;
+			sourceTree = "<group>";
+		};
+		AD970324238BCE99002957EB /* usr */ = {
+			isa = PBXGroup;
+			children = (
+				AD970325238BCE99002957EB /* bin */,
+			);
+			name = usr;
+			sourceTree = "<group>";
+		};
+		AD970325238BCE99002957EB /* bin */ = {
+			isa = PBXGroup;
+			children = (
+				AD970326238BCE99002957EB /* 0xdeadfa11 */,
+			);
+			name = bin;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -190,6 +246,22 @@
 			productReference = 96EF75961507C1CE00581A2E /* libclosure.a */;
 			productType = "com.apple.product-type.library.static";
 		};
+		AD97031E238BCE98002957EB /* Test */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AD97032B238BCE99002957EB /* Build configuration list for PBXNativeTarget "Test" */;
+			buildPhases = (
+				AD97031B238BCE98002957EB /* Sources */,
+				AD97031C238BCE98002957EB /* Frameworks */,
+				AD97031D238BCE98002957EB /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Test;
+			productName = Test;
+			productType = "com.apple.product-type.tool";
+		};
 		D2AAC0C605546C1D00DB518D /* Blocks */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 1DEB917D08733D990010E9CD /* Build configuration list for PBXNativeTarget "Blocks" */;
@@ -218,6 +290,9 @@
 					3F23D0731A4757F4008445C3 = {
 						CreatedOnToolsVersion = 6.3;
 					};
+					AD97031E238BCE98002957EB = {
+						CreatedOnToolsVersion = 10.1;
+					};
 				};
 			};
 			buildConfigurationList = 1DEB918108733D990010E9CD /* Build configuration list for PBXProject "Blocks" */;
@@ -239,6 +314,7 @@
 				831D5AD4122788D500E4A1EC /* Blocks-bundle */,
 				96EF75951507C1CE00581A2E /* libclosure_eOS */,
 				3F23D0731A4757F4008445C3 /* Blocks-simulator */,
+				AD97031E238BCE98002957EB /* Test */,
 			);
 		};
 /* End PBXProject section */
@@ -272,6 +348,23 @@
 			shellPath = /bin/sh;
 			shellScript = "# This target is only here for B&I compatibility.  Cortex should be\n# updated to use the Blocks target and then this target can be\n# removed.\n\ntrue";
 		};
+		AD97031D238BCE98002957EB /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/opt/MonkeyDev/bin/md --xcbp";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -290,6 +383,14 @@
 			files = (
 				96EF759B1507C27500581A2E /* data.c in Sources */,
 				96EF759C1507C27500581A2E /* runtime.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AD97031B238BCE98002957EB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AD970328238BCE99002957EB /* main.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -534,6 +635,87 @@
 			};
 			name = Release;
 		};
+		AD970329238BCE99002957EB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_ENTITLEMENTS = Test/monkeydev.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				EXCLUDED_RECURSIVE_SEARCH_PATH_SUBDIRECTORIES = "*.nib *.lproj *.gch (*) .DS_Store CVS .svn .git .hg *.xcodeproj *.xcode *.pbproj *.pbxproj";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(MonkeyDevPath)/frameworks/**",
+					"$(MonkeyDevTheosPath)/vendor/lib",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = "$(MonkeyDevTheosPath)/vendor/include/**";
+				INSTALL_PATH = /usr/bin;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				LIBRARY_SEARCH_PATHS = "$(MonkeyDevTheosPath)/vendor/lib/**";
+				MonkeyDevBuildPackageOnAnyBuild = NO;
+				MonkeyDevClearUiCacheOnInstall = NO;
+				MonkeyDevCopyOnBuild = NO;
+				MonkeyDevDeviceIP = "";
+				MonkeyDevDevicePassword = "";
+				MonkeyDevDevicePort = "";
+				MonkeyDevInstallOnAnyBuild = YES;
+				MonkeyDevInstallOnProfiling = YES;
+				MonkeyDevPath = /opt/MonkeyDev;
+				MonkeyDevTheosPath = /opt/theos;
+				MonkeyDevkillProcessOnInstall = "";
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "-DTHEOS_INSTANCE_NAME=\"\\\"Test\\\"\"";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = NO;
+			};
+			name = Debug;
+		};
+		AD97032A238BCE99002957EB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_ENTITLEMENTS = Test/monkeydev.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = YES;
+				EXCLUDED_RECURSIVE_SEARCH_PATH_SUBDIRECTORIES = "*.nib *.lproj *.gch (*) .DS_Store CVS .svn .git .hg *.xcodeproj *.xcode *.pbproj *.pbxproj";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(MonkeyDevPath)/frameworks/**",
+					"$(MonkeyDevTheosPath)/vendor/lib",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				HEADER_SEARCH_PATHS = "$(MonkeyDevTheosPath)/vendor/include/**";
+				INSTALL_PATH = /usr/bin;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				LIBRARY_SEARCH_PATHS = "$(MonkeyDevTheosPath)/vendor/lib/**";
+				MonkeyDevBuildPackageOnAnyBuild = NO;
+				MonkeyDevClearUiCacheOnInstall = NO;
+				MonkeyDevCopyOnBuild = NO;
+				MonkeyDevDeviceIP = "";
+				MonkeyDevDevicePassword = "";
+				MonkeyDevDevicePort = "";
+				MonkeyDevInstallOnAnyBuild = YES;
+				MonkeyDevInstallOnProfiling = YES;
+				MonkeyDevPath = /opt/MonkeyDev;
+				MonkeyDevTheosPath = /opt/theos;
+				MonkeyDevkillProcessOnInstall = "";
+				OTHER_CFLAGS = "-DTHEOS_INSTANCE_NAME=\"\\\"Test\\\"\"";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -578,6 +760,15 @@
 			buildConfigurations = (
 				96EF75971507C1CE00581A2E /* Debug */,
 				96EF75981507C1CE00581A2E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AD97032B238BCE99002957EB /* Build configuration list for PBXNativeTarget "Test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AD970329238BCE99002957EB /* Debug */,
+				AD97032A238BCE99002957EB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

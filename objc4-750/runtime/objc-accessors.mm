@@ -44,7 +44,9 @@ StripedMap<spinlock_t> StructLocks;
 StripedMap<spinlock_t> CppObjectLocks;
 
 #define MUTABLE_COPY 2
-
+/**
+  *  @brief   属性的 getter 方法
+  */
 id objc_getProperty(id self, SEL _cmd, ptrdiff_t offset, BOOL atomic) {
     if (offset == 0) {
         return object_getClass(self);
@@ -52,9 +54,10 @@ id objc_getProperty(id self, SEL _cmd, ptrdiff_t offset, BOOL atomic) {
 
     // Retain release world
     id *slot = (id*) ((char*)self + offset);
-    if (!atomic) return *slot;
+    if (!atomic) return *slot;  // 如果非原子性，直接返回
         
     // Atomic retain release world
+    // 如果原子性，则加自旋锁
     spinlock_t& slotlock = PropertyLocks[slot];
     slotlock.lock();
     id value = objc_retain(*slot);
@@ -86,10 +89,13 @@ static inline void reallySetProperty(id self, SEL _cmd, id newValue, ptrdiff_t o
         newValue = objc_retain(newValue);
     }
 
+    // 如果非原子性，直接赋值
     if (!atomic) {
         oldValue = *slot;
         *slot = newValue;
-    } else {
+    }
+    // 如果是原子性，加自旋锁
+    else {
         spinlock_t& slotlock = PropertyLocks[slot];
         slotlock.lock();
         oldValue = *slot;
@@ -100,6 +106,9 @@ static inline void reallySetProperty(id self, SEL _cmd, id newValue, ptrdiff_t o
     objc_release(oldValue);
 }
 
+/**
+  *  @brief  属性的 setter 方法
+  */
 void objc_setProperty(id self, SEL _cmd, ptrdiff_t offset, id newValue, BOOL atomic, signed char shouldCopy) 
 {
     bool copy = (shouldCopy && shouldCopy != MUTABLE_COPY);

@@ -9,6 +9,23 @@
 #import "Person.h"
 
 
+@interface TestAlloc ()
+{
+    NSString * _name;
+    int _age;
+    
+    /**   内存
+     
+         struct TestAlloc_IMPL {
+             struct NSObject_IMPL NSObject_IVARS;
+             NSString *_name;
+             int _age;
+         };
+            */
+}
+@end
+
+
 @implementation TestAlloc
 
 + (void)dowork

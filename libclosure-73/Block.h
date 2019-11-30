@@ -56,7 +56,9 @@ BLOCK_EXPORT void * _NSConcreteStackBlock[32]
 #endif
 
 // Type correct macros
-
+/**
+  *  @brief   Block_copy() 是一个宏定义，将传入的参数强转为 const void * 类型然后传给 _Block_copy() 函数
+  */
 #define Block_copy(...) ((__typeof(__VA_ARGS__))_Block_copy((const void *)(__VA_ARGS__)))
 #define Block_release(...) _Block_release((const void *)(__VA_ARGS__))
 
