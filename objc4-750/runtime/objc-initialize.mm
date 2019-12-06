@@ -366,7 +366,9 @@ void waitForInitializeToComplete(Class cls)
     asm("");
 }
 
-
+/**
+  *  @brief   initialize 是通过消息发送机制调用，消息发送机制通过 isa 指针找到对应的方法与实现，因此先找到分类方法中的实现，会优先调用分类方法中的实现。
+  */
 void callInitialize(Class cls)
 {
     ((void(*)(Class, SEL))objc_msgSend)(cls, SEL_initialize);
@@ -481,17 +483,24 @@ void performForkChildInitialize(Class cls, Class supercls)
 * class_initialize.  Send the '+initialize' message on demand to any
 * uninitialized class. Force initialization of superclasses first.
 **********************************************************************/
+/**
+  *  @brief   向任意未初始化的类发送 +initialize 消息。强制先初始化父类
+  */
 void _class_initialize(Class cls)
 {
     assert(!cls->isMetaClass());
 
+    // 父类
     Class supercls;
     bool reallyInitialize = NO;
 
     // Make sure super is done initializing BEFORE beginning to initialize cls.
     // See note about deadlock above.
+    // 获取父类
     supercls = cls->superclass;
+    // 父类未初始化
     if (supercls  &&  !supercls->isInitialized()) {
+        // 递归调用
         _class_initialize(supercls);
     }
     
@@ -534,6 +543,7 @@ void _class_initialize(Class cls)
         @try
 #endif
         {
+            // 调用 +initialize 消息
             callInitialize(cls);
 
             if (PrintInitializing) {

@@ -9,6 +9,6 @@
 
 @interface TestAssociate : NSObject
 
-+ (void)dowork;
+- (void)test;
 
 @end

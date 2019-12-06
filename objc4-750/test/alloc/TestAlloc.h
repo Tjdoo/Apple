@@ -10,6 +10,6 @@
 /**  clang 的用法：https://blog.csdn.net/puyangdev/article/details/68064841?winzoom=1   */
 @interface TestAlloc : NSObject
 
-+ (void)dowork;
++ (void)test;
 
 @end

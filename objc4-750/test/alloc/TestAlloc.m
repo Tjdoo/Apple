@@ -28,7 +28,7 @@
 
 @implementation TestAlloc
 
-+ (void)dowork
++ (void)test
 {    
     /*
      菜单栏 -》Debug -》Debug Workflow -》Always show Disassembly 开启汇编调试。
@@ -48,7 +48,8 @@
     
     
     
-    Person * p = [Person alloc];
+    Person * p = [[Person alloc] retain];
+    [p release];
     
     /*  下断点 -》LLDB：po p -》LLDB：memory read 0x102438f90（Person 对象的地址）
      

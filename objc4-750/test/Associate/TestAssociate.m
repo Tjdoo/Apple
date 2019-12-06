@@ -10,12 +10,17 @@
 
 @implementation TestAssociate
 
-+ (void)dowork
+- (void)test
 {
-    objc_setAssociatedObject(self, @selector(setName:), @"Tom", OBJC_ASSOCIATION_COPY);
+    NSArray * arr = [[NSArray alloc] initWithObjects:@"a", nil];
+    NSLog(@"retainCount = %lu", [arr retainCount]);  // 1
     
-    NSString * name = objc_getAssociatedObject(self, @selector(setName:));
-    NSLog(@"TestAssociate name = %@", name);
+    objc_setAssociatedObject(self, @selector(setName:), arr, OBJC_ASSOCIATION_RETAIN);
+    NSLog(@"retainCount = %lu", [arr retainCount]);  // 2
+    
+    NSArray * getArr = objc_getAssociatedObject(self, @selector(setName:));
+    NSLog(@"retainCount = %lu", [getArr retainCount]);  // 3
+    NSLog(@"TestAssociate = %@", getArr);
 }
 
 @end

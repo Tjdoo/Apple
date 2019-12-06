@@ -759,59 +759,77 @@ prepareMethodLists(Class cls, method_list_t **addedLists, int addedCount,
 // Attach method lists and properties and protocols from categories to a class.
 // Assumes the categories in cats are all loaded and sorted by load order, 
 // oldest categories first.
+/**
+  *  @brief   将 Category 的方法列表、协议列表、属性列表附加到类对象中。一个类可以有多个分类，所以这里是 cats 数组
+  */
 static void 
 attachCategories(Class cls, category_list *cats, bool flush_caches)
 {
     if (!cats) return;
     if (PrintReplacedMethods) printReplacements(cls, cats);
 
+    // 判断是否是元类
     bool isMeta = cls->isMetaClass();
 
     // fixme rearrange to remove these intermediate allocations
-    method_list_t **mlists = (method_list_t **)
-        malloc(cats->count * sizeof(*mlists));
-    property_list_t **proplists = (property_list_t **)
-        malloc(cats->count * sizeof(*proplists));
-    protocol_list_t **protolists = (protocol_list_t **)
-        malloc(cats->count * sizeof(*protolists));
+    // 根据每个分类中方法列表、属性列表、协议列表分配内存
+    
+    /* 方法数组 @[ @[method_t, method_t], @[method_t .....] ]  */
+    method_list_t **mlists = (method_list_t **)malloc(cats->count * sizeof(*mlists));
+    
+    /* 属性数组 @[ @[property_t, property_t], @[property_t .....] ]  */
+    property_list_t **proplists = (property_list_t **)malloc(cats->count * sizeof(*proplists));
+    
+    /* 协议数组 @[ @[peotocol_t, peotocol_t], @[peotocol_t .....] ]  */
+    protocol_list_t **protolists = (protocol_list_t **)malloc(cats->count * sizeof(*protolists));
 
     // Count backwards through cats to get newest categories first
     int mcount = 0;
     int propcount = 0;
     int protocount = 0;
+    // cls 类的分类个数
     int i = cats->count;
     bool fromBundle = NO;
+    
+    // 遍历拿到每个分类，取出所有分类的方法、属性、协议，并将它们各自添加到一个二维数组里，最后再通过 attachLists 将它们添加到类对象中。
     while (i--) {
         auto& entry = cats->list[i];
 
+        // 将所有分类的实例方法，添加到 mlist 数组中
         method_list_t *mlist = entry.cat->methodsForMeta(isMeta);
         if (mlist) {
             mlists[mcount++] = mlist;
             fromBundle |= entry.hi->isBundle();
         }
 
+        // 将所有分类的属性，添加到 proplist 数组中
         property_list_t *proplist = 
             entry.cat->propertiesForMeta(isMeta, entry.hi);
         if (proplist) {
             proplists[propcount++] = proplist;
         }
 
+        // 将所有分类的协议，添加到 protolist 数组中
         protocol_list_t *protolist = entry.cat->protocols;
         if (protolist) {
             protolists[protocount++] = protolist;
         }
     }
 
+    // rw：class_rw_t 结构体，class 结构体中用来存储对象方法、属性、协议的结构体
     auto rw = cls->data();
 
+    // 将 mlists 数组传入 rw->method 的 attachLists 函数，然后释放 mlists
     prepareMethodLists(cls, mlists, mcount, NO, fromBundle);
     rw->methods.attachLists(mlists, mcount);
     free(mlists);
     if (flush_caches  &&  mcount > 0) flushCaches(cls);
 
+    // 将 proplists 数组传入 rw->properties 的 attachLists 函数，然后释放 proplists
     rw->properties.attachLists(proplists, propcount);
     free(proplists);
 
+    // 将 protolists 数组传入 rw->protocols 的 attachLists 函数，然后释放 protocols
     rw->protocols.attachLists(protolists, protocount);
     free(protolists);
 }
@@ -913,6 +931,7 @@ static void remethodizeClass(Class cls)
                          cls->nameForLogging(), isMeta ? "(meta)" : "");
         }
         
+        // 核心
         attachCategories(cls, cats, true /*flush caches*/);        
         free(cats);
     }
@@ -2154,6 +2173,9 @@ void _objc_flush_caches(Class cls)
 *
 * Locking: write-locks runtimeLock
 **********************************************************************/
+/**
+  *  @brief    读取镜像（模块）
+  */
 void
 map_images(unsigned count, const char * const paths[],
            const struct mach_header * const mhdrs[])
@@ -2700,16 +2722,22 @@ void _read_images(header_info **hList, uint32_t hCount, int totalClasses, int un
 
     ts.log("IMAGE TIMES: realize future classes");
 
-    // Discover categories. 
+    // Discover categories.
+    // 分类相关代码
     for (EACH_HEADER) {
+        // 通过 _getObjc2CategoryList 函数获取到分类列表
         category_t **catlist = 
             _getObjc2CategoryList(hi, &count);
         bool hasClassProperties = hi->info()->hasCategoryClassProperties();
 
+        // 循环遍历
         for (i = 0; i < count; i++) {
+            // 分类的底层结构体
             category_t *cat = catlist[i];
+            // (classref_t) cls = 0x0000000100b0a140 -》NSObject
             Class cls = remapClass(cat->cls);
 
+            // 类不存在
             if (!cls) {
                 // Category's target class is missing (probably weak-linked).
                 // Disavow any knowledge of this category.
@@ -2727,6 +2755,7 @@ void _read_images(header_info **hList, uint32_t hCount, int totalClasses, int un
             // Then, rebuild the class's method lists (etc) if 
             // the class is realized. 
             bool classExists = NO;
+            // 分类结构体中含有实例方法列表、协议列表、属性列表
             if (cat->instanceMethods ||  cat->protocols  
                 ||  cat->instanceProperties) 
             {
@@ -2742,7 +2771,8 @@ void _read_images(header_info **hList, uint32_t hCount, int totalClasses, int un
                 }
             }
 
-            if (cat->classMethods  ||  cat->protocols  
+            // 分类结构体中含有类方法列表、协议列表、类对象的属性列表
+            if (cat->classMethods  ||  cat->protocols
                 ||  (hasClassProperties && cat->_classProperties)) 
             {
                 addUnattachedCategoryForClass(cat, cls->ISA(), hi);
@@ -4306,9 +4336,14 @@ _category_getLoadMethod(Category cat)
 property_list_t *
 category_t::propertiesForMeta(bool isMeta, struct header_info *hi)
 {
-    if (!isMeta) return instanceProperties;
-    else if (hi->info()->hasCategoryClassProperties()) return _classProperties;
-    else return nil;
+    // 不是元类，返回实例属性
+    if (!isMeta)
+        return instanceProperties;
+    // 元类 &
+    else if (hi->info()->hasCategoryClassProperties())
+        return _classProperties;
+    else
+        return nil;
 }
 
 
@@ -6544,6 +6579,7 @@ _class_createInstanceFromZone(Class cls, size_t extraBytes, void *zone,
         obj = _objc_constructOrFree(obj, cls);
     }
 
+    // ④、返回对象的内存地址
     return obj;
 }
 
@@ -6652,12 +6688,15 @@ void *objc_destructInstance(id obj)
 {
     if (obj) {
         // Read all of the flags at once for performance.
+        // 如果当前对象使用过 C++ 析构函数
         bool cxx = obj->hasCxxDtor();
+        // 如果当前对象有关联对象
         bool assoc = obj->hasAssociatedObjects();
 
         // This order is important.
-        if (cxx) object_cxxDestruct(obj);
-        if (assoc) _object_remove_assocations(obj);
+        // 要按顺序销毁
+        if (cxx) object_cxxDestruct(obj); // 销毁 C++ 析构函数相关的东西
+        if (assoc) _object_remove_assocations(obj);  // 移除关联对象
         obj->clearDeallocating();
     }
 
@@ -6675,7 +6714,8 @@ object_dispose(id obj)
 {
     if (!obj) return nil;
 
-    objc_destructInstance(obj);    
+    objc_destructInstance(obj);
+    // 销毁对象，并释放它对应的内存
     free(obj);
 
     return nil;
@@ -6754,7 +6794,7 @@ initializeTaggedPointerObfuscator(void) { }
 // includes the is-tagged bit. This makes objc_msgSend faster.
 // The "ext" representation doesn't do that.
 
-uintptr_t objc_debug_taggedpointer_obfuscator;
+uintptr_t objc_debug_taggedpointer_obfuscator;  // Tagged Pointer 混淆数
 uintptr_t objc_debug_taggedpointer_mask = _OBJC_TAG_MASK;
 unsigned  objc_debug_taggedpointer_slot_shift = _OBJC_TAG_SLOT_SHIFT;
 uintptr_t objc_debug_taggedpointer_slot_mask = _OBJC_TAG_SLOT_MASK;
@@ -6788,12 +6828,23 @@ disableTaggedPointers()
 
 // Returns a pointer to the class's storage in the tagged class arrays.
 // Assumes the tag is a valid basic tag.
+/**
+  *  @brief   返回数据类型。如：NSTaggedPointerString、__NSCFNumber 等，Mac 或 64 位存储在第 2 ~ 4 位，iPhone 真机存储在第 61 ~ 63 位
+  */
 static Class *
 classSlotForBasicTagIndex(objc_tag_index_t tag)
 {
+    // objc_debug_taggedpointer_obfuscator 是系统动态运行时随机生成的混淆数值
+    /*
+            _OBJC_TAG_INDEX_MASK = 0x7
+     
+                Mac 或 64 位模拟器：_OBJC_TAG_INDEX_SHIFT = 1，取出最低位 2~4 位的数
+                iPhone 真机：_OBJC_TAG_INDEX_SHIFT = 60，取出最高位 61 ~ 63 位 的数
+            */
     uintptr_t tagObfuscator = ((objc_debug_taggedpointer_obfuscator
                                 >> _OBJC_TAG_INDEX_SHIFT)
                                & _OBJC_TAG_INDEX_MASK);
+    // 还原标识位
     uintptr_t obfuscatedTag = tag ^ tagObfuscator;
     // Array index in objc_tag_classes includes the tagged bit itself
 #if SUPPORT_MSB_TAGGED_POINTERS
@@ -6835,19 +6886,31 @@ classSlotForTagIndex(objc_tag_index_t tag)
 * or retrieving payload values. They are filled with randomness on first
 * use.
 **********************************************************************/
+/**
+  *  @brief   生成 objc_debug_taggedpointer_obfuscator 对应的值。在 Mac10.14 和 iOS 12 后，是一个随机数
+  */
 static void
 initializeTaggedPointerObfuscator(void)
 {
+    // 判断 sdk 版本，在 Mac 10.14 和 iOS12 之前，对 TaggedPointer 做异或的 objc_debug_taggedpointer_obfuscator 值为 0
+    // a ^ b，b = 0 的时候，那么最终结果为 a。1010 ^ 0000 -》1010
     if (sdkIsOlderThan(10_14, 12_0, 12_0, 5_0, 3_0) ||
         // Set the obfuscator to zero for apps linked against older SDKs,
         // in case they're relying on the tagged pointer representation.
         DisableTaggedPointerObfuscation) {
         objc_debug_taggedpointer_obfuscator = 0;
-    } else {
+    }
+    // 在 Mac 10.14 和 iOS 12 后为 objc_debug_taggedpointer_obfuscator &= ~_OBJC_TAG_MASK
+    // 这就导致 a ^ b 的结果不是确定了
+    else {
         // Pull random data into the variable, then shift away all non-payload bits.
+        // 随机生成 objc_debug_taggedpointer_obfuscator
         arc4random_buf(&objc_debug_taggedpointer_obfuscator,
                        sizeof(objc_debug_taggedpointer_obfuscator));
         objc_debug_taggedpointer_obfuscator &= ~_OBJC_TAG_MASK;
+        
+        // 打印
+        printf("✨✨ objc_debug_taggedpointer_obfuscator = %lx\n", objc_debug_taggedpointer_obfuscator);
     }
 }
 

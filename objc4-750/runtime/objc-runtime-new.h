@@ -218,21 +218,34 @@ struct entsize_list_tt {
     };
 };
 
-
+/**
+  *  @brief   方法结构体
+ *  @example   {{ (struct objc_selector *)"test1", "v16@0:8", (void *)_I_NSObject_Category_test1},
+                             {(struct objc_selector *)"test2", "v16@0:8", (void *)_I_NSObject_Category_test2}}
+ 
+         static void _I_NSObject_Category_test1(NSObject * self, SEL _cmd) {
+ 
+         }
+*
+ *  @see   NSObject+Category.cpp
+ */
 struct method_t {
-    SEL name;
-    const char *types;
-    MethodListIMP imp;
+    SEL name;  // 方法编号，如："test1"
+    const char *types; // 方法编码："v16@0:8"
+    MethodListIMP imp;  // 方法实现
 
+    // 根据 sel 地址排序
     struct SortBySELAddress :
         public std::binary_function<const method_t&,
                                     const method_t&, bool>
     {
+        // 排序规则
         bool operator() (const method_t& lhs,
                          const method_t& rhs)
         { return lhs.name < rhs.name; }
     };
 };
+
 
 struct ivar_t {
 #if __x86_64__
@@ -256,12 +269,18 @@ struct ivar_t {
     }
 };
 
+/**
+  *  @brief   属性
+  */
 struct property_t {
     const char *name;
     const char *attributes;
 };
 
 // Two bits of entsize are used for fixup markers.
+/**
+  *  @brief   方法列表。继承自 entsize_list_tt
+  */
 struct method_list_t : entsize_list_tt<method_t, method_list_t, 0x3> {
     bool isFixedUp() const;
     void setFixedUp();
@@ -292,15 +311,17 @@ typedef uintptr_t protocol_ref_t;  // protocol_t *, but unremapped
 // Bits 0..15 are reserved for Swift's use.
 
 #define PROTOCOL_FIXED_UP_MASK (PROTOCOL_FIXED_UP_1 | PROTOCOL_FIXED_UP_2)
-
+/**
+  *  @brief   协议底层结构
+  */
 struct protocol_t : objc_object {
     const char *mangledName;
-    struct protocol_list_t *protocols;
-    method_list_t *instanceMethods;
-    method_list_t *classMethods;
-    method_list_t *optionalInstanceMethods;
-    method_list_t *optionalClassMethods;
-    property_list_t *instanceProperties;
+    struct protocol_list_t *protocols; // 遵守的协议列表
+    method_list_t *instanceMethods;  // 必须实现的实例方法
+    method_list_t *classMethods;     // 必须实现的类方法
+    method_list_t *optionalInstanceMethods;  // 可选实现的实例方法
+    method_list_t *optionalClassMethods;     // 可选实现的类方法
+    property_list_t *instanceProperties;     //
     uint32_t size;   // sizeof(protocol_t)
     uint32_t flags;
     // Fields below this point are not always present on disk.
@@ -717,20 +738,36 @@ class list_array_tt {
         }
     }
 
+    /**  向 list 添加二维数组 */
     void attachLists(List* const * addedLists, uint32_t addedCount) {
+        // 添加个数为 0
         if (addedCount == 0) return;
 
         if (hasArray()) {
             // many lists -> many lists
+            // array()->count 类对象原来的方法列表，属性列表，协议列表，addedLists 传入所有分类的方法列表，属性列表，协议列表
             uint32_t oldCount = array()->count;
             uint32_t newCount = oldCount + addedCount;
             setArray((array_t *)realloc(array(), array_t::byteSize(newCount)));
             array()->count = newCount;
+            // memmove 内存移动，将 array()->lists 的内存移动 oldCount * sizeof(array()->lists[0]) 个内存到 array()->lists + addedCount 中
+            // memmove ：内存移动。将 __src 的内存移动 __len 块内存到 __dst 中
+            /*  __dst ：移动内存的目的地
+                                  __src ：被移动的内存首地址
+                                  __len ：被移动的内存长度
+                             */
             memmove(array()->lists + addedCount, array()->lists, 
                     oldCount * sizeof(array()->lists[0]));
+            // memcpy 内存复制，将 addedLists 的内存复制 addedCount * sizeof(array()->lists[0]) 个内存到 array()->lists 中
+            // memcpy ：内存拷贝。将 __src 的内存移动 __n 块内存到 __dst 中
+            /*  __dst ：拷贝内存的拷贝目的地
+                                    __src ：被拷贝的内存首地址
+                                    __n ：被移动的内存长度
+                             */
             memcpy(array()->lists, addedLists, 
                    addedCount * sizeof(array()->lists[0]));
         }
+        // 原本没有数据 && 添加一个数据
         else if (!list  &&  addedCount == 1) {
             // 0 lists -> 1 list
             list = addedLists[0];
@@ -738,11 +775,19 @@ class list_array_tt {
         else {
             // 1 list -> many lists
             List* oldList = list;
+            // 已有长度
             uint32_t oldCount = oldList ? 1 : 0;
+            // 增加后的总长度
             uint32_t newCount = oldCount + addedCount;
+            // 申请 newCount 长度的空间
             setArray((array_t *)malloc(array_t::byteSize(newCount)));
             array()->count = newCount;
-            if (oldList) array()->lists[addedCount] = oldList;
+            
+            if (oldList)
+                // 将 oldList 放到 addedCount 索引之后
+                array()->lists[addedCount] = oldList;
+            
+            // 将分类的列表数据从 0 开始放置。这也就是说明，分类中相同的方法会“覆盖”类对象的，因为分类的在前面
             memcpy(array()->lists, addedLists, 
                    addedCount * sizeof(array()->lists[0]));
         }
@@ -780,7 +825,9 @@ class list_array_tt {
     }
 };
 
-
+/**
+ *  @brief   方法列表。继承自 list_array_tt
+ */
 class method_array_t : 
     public list_array_tt<method_t, method_list_t> 
 {
@@ -799,6 +846,9 @@ class method_array_t :
 };
 
 
+/**
+  *  @brief   属性列表。继承自 list_array_tt
+  */
 class property_array_t : 
     public list_array_tt<property_t, property_list_t> 
 {
@@ -810,7 +860,9 @@ class property_array_t :
     }
 };
 
-
+/**
+ *  @brief   协议列表。继承自 list_array_tt
+ */
 class protocol_array_t : 
     public list_array_tt<protocol_ref_t, protocol_list_t> 
 {
@@ -830,9 +882,9 @@ struct class_rw_t {
 
     const class_ro_t *ro;
 
-    method_array_t methods;
-    property_array_t properties;
-    protocol_array_t protocols;
+    method_array_t methods;  // 方法列表
+    property_array_t properties; // 属性列表
+    protocol_array_t protocols;  // 协议列表
 
     Class firstSubclass;
     Class nextSiblingClass;
@@ -1387,20 +1439,36 @@ struct swift_class_t : objc_class {
     }
 };
 
+/**
+  *  @brief   一个分类（Category）的结构体。
+ *  @discussion   分类的实现原理是将 category 中的方法、属性、协议数据放在 category_t 结构体中，然后将结构体内的方法列表拷贝到类对象的方法列表中。
+ 
+     Category可以添加属性，但分类结构体中是不存在成员变量的，因此分类中是不允许添加成员变量的。分类中添加的属性并不会帮助我们自动生成成员变量，只会生成 getter、setter 方法的声明，需要我们自己去实现。
 
+    成员变量是存放在实例对象中的，并且`编译`的那一刻就已经决定好了。而分类是在运行时才去加载的。那么我们就无法在程序运行时将分类的成员变量中添加到实例对象的结构体中。因此分类中不可以添加成员变量。
+ 
+        最终分类中的对象方法、类方法、协议方法、属性方法都是要存储到类对象的。
+  *
+  *  @see  NSObject+Category.cpp，clang 重写后的 c++ 代码
+  */
 struct category_t {
-    const char *name;
-    classref_t cls;
-    struct method_list_t *instanceMethods;
-    struct method_list_t *classMethods;
-    struct protocol_list_t *protocols;
-    struct property_list_t *instanceProperties;
+    const char *name;  // 名称、类名
+    classref_t cls;  //
+    struct method_list_t *instanceMethods;  // 对象方法列表
+    struct method_list_t *classMethods; // 类方法列表
+    struct protocol_list_t *protocols;  // 协议列表
+    struct property_list_t *instanceProperties;  // 属性列表
     // Fields below this point are not always present on disk.
     struct property_list_t *_classProperties;
 
+    // 可以通过“实例对象 - 类对象 - 元类”中间的关系理解下面的逻辑
     method_list_t *methodsForMeta(bool isMeta) {
-        if (isMeta) return classMethods;
-        else return instanceMethods;
+        // 如果是元类，返回类方法列表
+        if (isMeta)
+            return classMethods;
+        // 如果非元类，返回实例方法列表
+        else
+            return instanceMethods;
     }
 
     property_list_t *propertiesForMeta(bool isMeta, struct header_info *hi);

@@ -88,8 +88,10 @@
 		AD0F6EBD23827FF900AE92B9 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = AD0F6EBA23827FF800AE92B9 /* main.m */; };
 		AD0F6EBE23827FF900AE92B9 /* Person.m in Sources */ = {isa = PBXBuildFile; fileRef = AD0F6EBC23827FF800AE92B9 /* Person.m */; };
 		AD0F6EC3238283A700AE92B9 /* TestWeak.m in Sources */ = {isa = PBXBuildFile; fileRef = AD0F6EC2238283A700AE92B9 /* TestWeak.m */; };
-		AD0F6EC72382843A00AE92B9 /* TestAlloc.m in Sources */ = {isa = PBXBuildFile; fileRef = AD0F6EC62382843A00AE92B9 /* TestAlloc.m */; };
-		ADBFB3512384355F00557E0F /* TestAssociate.m in Sources */ = {isa = PBXBuildFile; fileRef = ADBFB3502384355F00557E0F /* TestAssociate.m */; };
+		AD0F6EC72382843A00AE92B9 /* TestAlloc.m in Sources */ = {isa = PBXBuildFile; fileRef = AD0F6EC62382843A00AE92B9 /* TestAlloc.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		ADAF6BD723962FBB00E9D036 /* TestTaggedPointer.m in Sources */ = {isa = PBXBuildFile; fileRef = ADAF6BD623962FBB00E9D036 /* TestTaggedPointer.m */; };
+		ADB6389323978E8D00F652BC /* NSObject+Category.m in Sources */ = {isa = PBXBuildFile; fileRef = ADB6389223978E8D00F652BC /* NSObject+Category.m */; };
+		ADBFB3512384355F00557E0F /* TestAssociate.m in Sources */ = {isa = PBXBuildFile; fileRef = ADBFB3502384355F00557E0F /* TestAssociate.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		ADE6D2D7238D6F8F00C531A9 /* TestAutoreleasepool.m in Sources */ = {isa = PBXBuildFile; fileRef = ADE6D2D6238D6F8F00C531A9 /* TestAutoreleasepool.m */; };
 		B95141DD2233CB00009BA2E0 /* CrashReporterClient.h in Headers */ = {isa = PBXBuildFile; fileRef = B95141C92233CB00009BA2E0 /* CrashReporterClient.h */; };
 		B95141DE2233CB00009BA2E0 /* isa.h in Headers */ = {isa = PBXBuildFile; fileRef = B95141CA2233CB00009BA2E0 /* isa.h */; };
@@ -237,6 +239,11 @@
 		AD2227FD238FE9E3001FB83F /* AutoreleasePoolPage.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AutoreleasePoolPage.png; sourceTree = "<group>"; };
 		AD2227FE238FE9E3001FB83F /* Push.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Push.png; sourceTree = "<group>"; };
 		AD2227FF238FE9E3001FB83F /* Pop.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Pop.png; sourceTree = "<group>"; };
+		ADAF6BD523962FBB00E9D036 /* TestTaggedPointer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TestTaggedPointer.h; sourceTree = "<group>"; };
+		ADAF6BD623962FBB00E9D036 /* TestTaggedPointer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TestTaggedPointer.m; sourceTree = "<group>"; };
+		ADB6389123978E8D00F652BC /* NSObject+Category.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSObject+Category.h"; sourceTree = "<group>"; };
+		ADB6389223978E8D00F652BC /* NSObject+Category.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSObject+Category.m"; sourceTree = "<group>"; };
+		ADB638AA2397DC6E00F652BC /* NSObject+Category.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "NSObject+Category.cpp"; sourceTree = "<group>"; };
 		ADBFB34D2384353C00557E0F /* Association_2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Association_2.png; sourceTree = "<group>"; };
 		ADBFB34E2384353C00557E0F /* Association_1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Association_1.png; sourceTree = "<group>"; };
 		ADBFB34F2384355F00557E0F /* TestAssociate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TestAssociate.h; sourceTree = "<group>"; };
@@ -459,6 +466,8 @@
 				AD0F6EBF2382834D00AE92B9 /* weak */,
 				ADBFB34C2384351B00557E0F /* Associate */,
 				ADE6D2D4238D6F2800C531A9 /* Autoreleasepool */,
+				ADAF6BD423962F9C00E9D036 /* TaggedPointer */,
+				ADB6389023978E7300F652BC /* Category */,
 				AD0F6EBA23827FF800AE92B9 /* main.m */,
 				AD0F6EBB23827FF800AE92B9 /* Person.h */,
 				AD0F6EBC23827FF800AE92B9 /* Person.m */,
@@ -485,6 +494,25 @@
 				AD0F6EC62382843A00AE92B9 /* TestAlloc.m */,
 			);
 			path = alloc;
+			sourceTree = "<group>";
+		};
+		ADAF6BD423962F9C00E9D036 /* TaggedPointer */ = {
+			isa = PBXGroup;
+			children = (
+				ADAF6BD523962FBB00E9D036 /* TestTaggedPointer.h */,
+				ADAF6BD623962FBB00E9D036 /* TestTaggedPointer.m */,
+			);
+			path = TaggedPointer;
+			sourceTree = "<group>";
+		};
+		ADB6389023978E7300F652BC /* Category */ = {
+			isa = PBXGroup;
+			children = (
+				ADB638AA2397DC6E00F652BC /* NSObject+Category.cpp */,
+				ADB6389123978E8D00F652BC /* NSObject+Category.h */,
+				ADB6389223978E8D00F652BC /* NSObject+Category.m */,
+			);
+			path = Category;
 			sourceTree = "<group>";
 		};
 		ADBFB34C2384351B00557E0F /* Associate */ = {
@@ -768,8 +796,10 @@
 				ADBFB3512384355F00557E0F /* TestAssociate.m in Sources */,
 				ADE6D2D7238D6F8F00C531A9 /* TestAutoreleasepool.m in Sources */,
 				AD0F6EC72382843A00AE92B9 /* TestAlloc.m in Sources */,
+				ADAF6BD723962FBB00E9D036 /* TestTaggedPointer.m in Sources */,
 				AD0F6EBD23827FF900AE92B9 /* main.m in Sources */,
 				AD0F6EC3238283A700AE92B9 /* TestWeak.m in Sources */,
+				ADB6389323978E8D00F652BC /* NSObject+Category.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -11,6 +11,7 @@
 
 + (void)test
 {
+	// 异步 + 主队列
 	dispatch_async(dispatch_get_main_queue(), ^{
 		
 	});

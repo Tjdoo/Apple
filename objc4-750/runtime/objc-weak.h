@@ -78,10 +78,10 @@ typedef DisguisedPtr<objc_object *> weak_referrer_t;
 #define REFERRERS_OUT_OF_LINE 2
 
 struct weak_entry_t {
-    DisguisedPtr<objc_object> referent;
+    DisguisedPtr<objc_object> referent;  // 对象的内存地址
     union {
         struct {
-            weak_referrer_t *referrers;
+            weak_referrer_t *referrers;  // 指向该对象的弱指针数组，即所有指向该对象的弱指针（其实存储的是弱指针对应那块内存的地址，但是我们直接理解为弱指针是没有问题的）
             uintptr_t        out_of_line_ness : 2;
             uintptr_t        num_refs : PTR_MINUS_2;
             uintptr_t        mask;
@@ -117,7 +117,7 @@ struct weak_entry_t {
  * and weak_entry_t structs as their values.
  */
 struct weak_table_t {
-    weak_entry_t *weak_entries;
+    weak_entry_t *weak_entries;  // 这个才是弱引用表，表中元素为 weak_entry_t 结构体
     size_t    num_entries;
     uintptr_t mask;
     uintptr_t max_hash_displacement;

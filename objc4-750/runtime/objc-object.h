@@ -92,6 +92,9 @@ objc_object::getIsa()
 }
 
 
+/**
+ *  @brief   返回是否是 TaggedPinter 指针。TaggedPinter 指针没有 isa，和普通的指针对象需要走不同的流程
+ */
 inline bool 
 objc_object::isTaggedPointer() 
 {
@@ -152,7 +155,7 @@ objc_object::isExtTaggedPointer()
 inline Class 
 objc_object::ISA() 
 {
-    // 非 TaggedPointer（标记指针），触发断言
+    // 只有普通指针对象才能走下面的流程，如果是 TaggedPointer（标记指针），触发断言
     assert(!isTaggedPointer());
     
 #if SUPPORT_INDEXED_ISA
@@ -226,11 +229,26 @@ objc_object::initIsa(Class cls, bool nonpointer, bool hasCxxDtor)
         newisa.has_cxx_dtor = hasCxxDtor;
         newisa.indexcls = (uintptr_t)cls->classArrayIndex();
 #else
+        /*
+                        isa 赋初值
+         
+                        #   define ISA_MAGIC_VALUE 0x001d800000000001ULL
+         
+                        转换成二进制0b
+                        64~49位：0000 0000 0000 0000
+                        48~33位：0000 0011 1111 0000
+                        32~17位：0000 0000 0000 0000
+                        16~01位：0000 0000 0000 0001
+                    */
         newisa.bits = ISA_MAGIC_VALUE;
         // isa.magic is part of ISA_MAGIC_VALUE
         // isa.nonpointer is part of ISA_MAGIC_VALUE
+        // 标记当前对象是否使用过C++析构函数
         newisa.has_cxx_dtor = hasCxxDtor;
+        // 把 cls 的值，即对象所属类的地址，右移三位，初始化进 isa 共用体的 shiftcls 成员中
         newisa.shiftcls = (uintptr_t)cls >> 3;
+        
+        // 由上可见用 alloc、new、copy、mutableCopy创建对象时，系统其实并不会把 isa 共用体里的引用计数置为 1（extra_rc 在 isa 的 64 位 ~ 46 位上，为 0 的），所以我们说对象的 isa 共用体里存储的是（对象的引用计数 - 1）
 #endif
 
         // This write must be performed in a single store in some cases
@@ -334,9 +352,13 @@ objc_object::hasAssociatedObjects()
 }
 
 
+/**
+  *  @brief   设置当前对象已经有了关联对象
+  */
 inline void
 objc_object::setHasAssociatedObjects()
 {
+    // TaggedPointer 对象直接返回
     if (isTaggedPointer()) return;
 
  retry:
@@ -346,6 +368,7 @@ objc_object::setHasAssociatedObjects()
         ClearExclusive(&isa.bits);
         return;
     }
+    // 修改 isa_t 的 bits 内容，表明自己有了关联对象
     newisa.has_assoc = true;
     if (!StoreExclusive(&isa.bits, oldisa.bits, newisa.bits)) goto retry;
 }
@@ -406,6 +429,7 @@ objc_object::clearDeallocating()
         // Slow path for raw pointer isa.
         sidetable_clearDeallocating();
     }
+    // 有弱引用表、引用计数表
     else if (slowpath(isa.weakly_referenced  ||  isa.has_sidetable_rc)) {
         // Slow path for non-pointer isa with weak refs and/or side table data.
         clearDeallocating_slow();
@@ -420,16 +444,18 @@ objc_object::rootDealloc()
 {
     if (isTaggedPointer()) return;  // fixme necessary?
 
-    if (fastpath(isa.nonpointer  &&  
-                 !isa.weakly_referenced  &&  
-                 !isa.has_assoc  &&  
-                 !isa.has_cxx_dtor  &&  
-                 !isa.has_sidetable_rc))
+    if (fastpath(isa.nonpointer  &&  // 优化过的 isa
+                 !isa.weakly_referenced  &&  // 如果弱引用表里没有当前对象的弱指针数组
+                 !isa.has_assoc  &&   // 如果当前对象没有关联对象
+                 !isa.has_cxx_dtor  &&   // 如果当前对象没使用过 C++ 析构函数
+                 !isa.has_sidetable_rc))  // 如果引用计数表里没有当前对象的引用计数
     {
         assert(!sidetable_present());
+        // 直接销毁对象，并释放它对应的内存，对象销毁时会更快
         free(this);
     } 
     else {
+        // 否则慢慢销毁
         object_dispose((id)this);
     }
 }
@@ -473,6 +499,7 @@ objc_object::rootTryRetain()
 ALWAYS_INLINE id 
 objc_object::rootRetain(bool tryRetain, bool handleOverflow)
 {
+    // TaggedPointer 对象不是用引用计数来进行内存管理的，直接返回自身
     if (isTaggedPointer()) return (id)this;
 
     bool sideTableLocked = false;
@@ -483,23 +510,37 @@ objc_object::rootRetain(bool tryRetain, bool handleOverflow)
 
     do {
         transcribeToSideTable = false;
+        // 拿到对象的 isa 共用体
         oldisa = LoadExclusive(&isa.bits);
         newisa = oldisa;
+        // 如果对象的 isa 是没有经过内存优化的，那么它的引用计数就直接存储在引用计数表里
+        // slowpath 更小可能满足
         if (slowpath(!newisa.nonpointer)) {
             ClearExclusive(&isa.bits);
-            if (!tryRetain && sideTableLocked) sidetable_unlock();
-            if (tryRetain) return sidetable_tryRetain() ? (id)this : nil;
-            else return sidetable_retain();
+            if (!tryRetain && sideTableLocked)
+                sidetable_unlock();
+            if (tryRetain)
+                return sidetable_tryRetain() ? (id)this : nil;
+            else
+                // 去引用计数表里让它的引用计数 + 1
+                return sidetable_retain();
         }
+        
+        // 此时已经表明是经过内存优化的，那么它的引用计数就首先存储在 isa 共用体里
+        
         // don't check newisa.fast_rr; we already called any RR overrides
         if (slowpath(tryRetain && newisa.deallocating)) {
             ClearExclusive(&isa.bits);
             if (!tryRetain && sideTableLocked) sidetable_unlock();
             return nil;
         }
+        
+        // 用来标识 extra_rc 是否溢出，extra_rc 的存储范围是 0~255
         uintptr_t carry;
+        // 首先去 isa 共用体里面，让对象的引用计数 +1
         newisa.bits = addc(newisa.bits, RC_ONE, 0, &carry);  // extra_rc++
 
+        // 如果发生了溢出
         if (slowpath(carry)) {
             // newisa.extra_rc++ overflowed
             if (!handleOverflow) {
@@ -508,20 +549,29 @@ objc_object::rootRetain(bool tryRetain, bool handleOverflow)
             }
             // Leave half of the retain counts inline and 
             // prepare to copy the other half to the side table.
-            if (!tryRetain && !sideTableLocked) sidetable_lock();
+            if (!tryRetain && !sideTableLocked)
+                sidetable_lock();
+            
             sideTableLocked = true;
             transcribeToSideTable = true;
+            
+            // 保留一半的引用计数，即 128 个，RC_HALF = 128。在共用体里，另外的 128 个准备复制到引用计数表里存储
             newisa.extra_rc = RC_HALF;
+            // 并把引用计数表里是否有当前对象的引用计数标识 has_sidetable_rc 置为 1
             newisa.has_sidetable_rc = true;
         }
-    } while (slowpath(!StoreExclusive(&isa.bits, oldisa.bits, newisa.bits)));
+    } while (slowpath(!StoreExclusive(&isa.bits, oldisa.bits, newisa.bits)));  // 比较之后，更新对象的 isa 共用体
 
     if (slowpath(transcribeToSideTable)) {
         // Copy the other half of the retain counts to the side table.
+        // 把另外的 128 个引用计数复制到引用计数表里存储（由此可见对象下一次调用 retain 时，加得还是共用体里的引用计数，因为它已经不再处于溢出状态了，直到再次溢出，再复制 128 个引用计数到引用计数表里存储，如此循环）
         sidetable_addExtraRC_nolock(RC_HALF);
     }
 
-    if (slowpath(!tryRetain && sideTableLocked)) sidetable_unlock();
+    if (slowpath(!tryRetain && sideTableLocked))
+        sidetable_unlock();
+    
+    // 返回对象自己
     return (id)this;
 }
 
@@ -566,6 +616,7 @@ objc_object::rootReleaseShouldDealloc()
 ALWAYS_INLINE bool 
 objc_object::rootRelease(bool performDealloc, bool handleUnderflow)
 {
+    // TaggedPointer 对象不是用引用计数来进行内存管理的，直接返回自身
     if (isTaggedPointer()) return false;
 
     bool sideTableLocked = false;
@@ -577,30 +628,40 @@ objc_object::rootRelease(bool performDealloc, bool handleUnderflow)
     do {
         oldisa = LoadExclusive(&isa.bits);
         newisa = oldisa;
+        // 如果对象的 isa 是没有经过内存优化的，那么它的引用计数就直接存储在引用计数表里
         if (slowpath(!newisa.nonpointer)) {
             ClearExclusive(&isa.bits);
             if (sideTableLocked) sidetable_unlock();
+            
+            // 去引用计数表里让它的引用计数 -1
             return sidetable_release(performDealloc);
         }
         // don't check newisa.fast_rr; we already called any RR overrides
+        // 用来标识 extra_rc 是否溢出，即是否成了 -1。因为 extra_rc 存储的是【引用计数 - 1】，所以减为 0 的时候说明引用计数为 1，还有人引用它）
         uintptr_t carry;
+        // 首先去 isa 共用体里，让对象的引用计数 -1
         newisa.bits = subc(newisa.bits, RC_ONE, 0, &carry);  // extra_rc--
+        
+        // 所以如果 extra_rc 向下溢出了
         if (slowpath(carry)) {
             // don't ClearExclusive()
-            goto underflow;
+            goto underflow; // 跳转到 underflow 处执行
         }
     } while (slowpath(!StoreReleaseExclusive(&isa.bits, 
                                              oldisa.bits, newisa.bits)));
 
     if (slowpath(sideTableLocked)) sidetable_unlock();
+    
+    // 表明没有下溢，结束
     return false;
 
- underflow:
+ underflow:  // extra_rc下溢了
     // newisa.extra_rc-- underflowed: borrow from side table or deallocate
 
     // abandon newisa to undo the decrement
     newisa = oldisa;
 
+    // 如果引用计数表里有当前对象的引用计数，说明还有人使用该对象
     if (slowpath(newisa.has_sidetable_rc)) {
         if (!handleUnderflow) {
             ClearExclusive(&isa.bits);
@@ -618,16 +679,19 @@ objc_object::rootRelease(bool performDealloc, bool handleUnderflow)
             goto retry;
         }
 
-        // Try to remove some retain counts from the side table.        
+        // Try to remove some retain counts from the side table.
+        // 尝试从引用计数表搬回来 128 个引用计数
         size_t borrowed = sidetable_subExtraRC_nolock(RC_HALF);
 
         // To avoid races, has_sidetable_rc must remain set 
         // even if the side table count is now zero.
-
+        // 如果搬成功了
         if (borrowed > 0) {
             // Side table retain count decreased.
             // Try to add them to the inline count.
+            // 存进去
             newisa.extra_rc = borrowed - 1;  // redo the original decrement too
+            // 比较之后，更新对象的 isa 共用体
             bool stored = StoreReleaseExclusive(&isa.bits, 
                                                 oldisa.bits, newisa.bits);
             if (!stored) {
@@ -664,11 +728,13 @@ objc_object::rootRelease(bool performDealloc, bool handleUnderflow)
         }
         else {
             // Side table is empty after all. Fall-through to the dealloc path.
+            // 搬失败了，说明引用计数表里的引用计数也为 0 了，走 dealloc 方法销毁该对象
         }
     }
 
     // Really deallocate.
-
+    // 引用计数表里没有当前对象的引用计数，说明没人使用该对象了
+    
     if (slowpath(newisa.deallocating)) {
         ClearExclusive(&isa.bits);
         if (sideTableLocked) sidetable_unlock();
@@ -682,6 +748,7 @@ objc_object::rootRelease(bool performDealloc, bool handleUnderflow)
 
     __sync_synchronize();
     if (performDealloc) {
+        // dealloc 方法销毁该对象
         ((void(*)(objc_object *, SEL))objc_msgSend)(this, SEL_dealloc);
     }
     return true;

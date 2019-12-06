@@ -9,12 +9,16 @@
 
 @implementation TestWeak
 
-+ (void)dowork
++ (void)test
 {
     NSObject * objc = [[NSObject alloc] init];
-    id __weak objc2 = objc; // 底层调用 objc_initWeak()
-    id __strong objc3 = objc;
+    NSLog(@"%@  %p", objc, objc);
     
+    id __weak objc2 = objc; // 底层调用 objc_initWeak()
+    NSLog(@"%@  %p", objc2, objc2);
+    
+    id __strong objc3 = objc; // 底层调用 objc_storeStrong()
+    NSLog(@"%@  %p", objc3, objc3);
 }
 
 @end  

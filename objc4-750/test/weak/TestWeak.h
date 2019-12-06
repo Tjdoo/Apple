@@ -9,6 +9,6 @@
 
 @interface TestWeak : NSObject
 
-+ (void)dowork;
++ (void)test;
 
 @end

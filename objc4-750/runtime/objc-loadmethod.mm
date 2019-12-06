@@ -31,14 +31,20 @@
 
 typedef void(*load_method_t)(id, SEL);
 
+/**
+  *  @brief   可执行 +load 方法的类对象的结构体
+  */
 struct loadable_class {
-    Class cls;  // may be nil
-    IMP method;
+    Class cls;  // may be nil  类对象
+    IMP method; // + load 方法实现，内存地址
 };
 
+/**
+  *  @brief   可执行 +load 方法的分类的结构体
+  */
 struct loadable_category {
-    Category cat;  // may be nil
-    IMP method;
+    Category cat;  // may be nil  分类
+    IMP method;  // +load 方法实现，内存地址
 };
 
 
@@ -181,11 +187,15 @@ void remove_category_from_loadable_list(Category cat)
 *
 * Called only by call_load_methods().
 **********************************************************************/
+/**
+  *  @brief   调用类的 load 方法
+  */
 static void call_class_loads(void)
 {
     int i;
     
     // Detach current loadable list.
+    // 分离出当前可加载的类列表
     struct loadable_class *classes = loadable_classes;
     int used = loadable_classes_used;
     loadable_classes = nil;
@@ -194,13 +204,16 @@ static void call_class_loads(void)
     
     // Call all +loads for the detached list.
     for (i = 0; i < used; i++) {
+        // 类对象
         Class cls = classes[i].cls;
+        // +load 方法实现
         load_method_t load_method = (load_method_t)classes[i].method;
         if (!cls) continue; 
 
         if (PrintLoading) {
             _objc_inform("LOAD: +[%s load]\n", cls->nameForLogging());
         }
+        // 直接拿到 load 方法的内存地址直接调用方法，不在是通过消息发送机制调用。
         (*load_method)(cls, SEL_load);
     }
     
@@ -221,12 +234,16 @@ static void call_class_loads(void)
 *
 * Called only by call_load_methods().
 **********************************************************************/
+/**
+  *  @brief   调用分类的 +load 方法
+  */
 static bool call_category_loads(void)
 {
     int i, shift;
     bool new_categories_added = NO;
     
     // Detach current loadable list.
+    // 分离出当前可执行 +load 的分类列表
     struct loadable_category *cats = loadable_categories;
     int used = loadable_categories_used;
     int allocated = loadable_categories_allocated;
@@ -236,7 +253,9 @@ static bool call_category_loads(void)
 
     // Call all +loads for the detached list.
     for (i = 0; i < used; i++) {
+        // 分类对象
         Category cat = cats[i].cat;
+        // +load 方法实现
         load_method_t load_method = (load_method_t)cats[i].method;
         Class cls;
         if (!cat) continue;
@@ -248,6 +267,7 @@ static bool call_category_loads(void)
                              cls->nameForLogging(), 
                              _category_getName(cat));
             }
+            // 直接通过内存地址调用
             (*load_method)(cls, SEL_load);
             cats[i].cat = nil;
         }
@@ -334,6 +354,9 @@ static bool call_category_loads(void)
 * Locking: loadMethodLock must be held by the caller 
 *   All other locks must not be held.
 **********************************************************************/
+/**
+  *  @brief   调用 load 方法
+  */
 void call_load_methods(void)
 {
     static bool loading = NO;
@@ -345,20 +368,24 @@ void call_load_methods(void)
     if (loading) return;
     loading = YES;
 
+    // 自动释放池入栈
     void *pool = objc_autoreleasePoolPush();
 
     do {
         // 1. Repeatedly call class +loads until there aren't any more
         while (loadable_classes_used > 0) {
+            // 先调用类的 load
             call_class_loads();
         }
 
         // 2. Call category +loads ONCE
+        // 再调用分类的 load
         more_categories = call_category_loads();
 
         // 3. Run more +loads if there are classes OR more untried categories
     } while (loadable_classes_used > 0  ||  more_categories);
 
+    // 自动释放池出栈
     objc_autoreleasePoolPop(pool);
 
     loading = NO;

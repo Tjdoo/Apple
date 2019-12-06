@@ -259,8 +259,8 @@ void removeHeader(header_info *hi)
 
 /***********************************************************************
 * environ_init
-* Read environment variables that affect the runtime.
-* Also print environment variable help, if requested.
+ * Read environment variables that affect the runtime.  读取影响运行时的环境变量。
+* Also print environment variable help, if requested.    如果需要，还可以打印环境变量 help。
 **********************************************************************/
 void environ_init(void) 
 {
@@ -560,17 +560,23 @@ void objc_setEnumerationMutationHandler(void (*handler)(id)) {
 /**********************************************************************
 * Associative Reference Support
 **********************************************************************/
-
+/**
+  *  @brief   获取 object 的关联对象
+  */
 id objc_getAssociatedObject(id object, const void *key) {
     return _object_get_associative_reference(object, (void *)key);
 }
 
-
+/**
+  *  @brief   向 object 添加关联对象
+  */
 void objc_setAssociatedObject(id object, const void *key, id value, objc_AssociationPolicy policy) {
     _object_set_associative_reference(object, (void *)key, value, policy);
 }
 
-
+/**
+  *  @brief   移除 object 的所有关联对象
+  */
 void objc_removeAssociatedObjects(id object) 
 {
     if (object && object->hasAssociatedObjects()) {

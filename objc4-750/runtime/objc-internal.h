@@ -324,7 +324,7 @@ _objc_getTaggedPointerSignedValue(const void * _Nullable ptr);
 
 #if (TARGET_OS_OSX || TARGET_OS_IOSMAC) && __x86_64__
     // 64-bit Mac - tag bit is LSB
-#   define OBJC_MSB_TAGGED_POINTERS 0
+#   define OBJC_MSB_TAGGED_POINTERS 0  // Mac、模拟器上 0
 #else
     // Everything else - tag bit is MSB
 #   define OBJC_MSB_TAGGED_POINTERS 1
@@ -341,8 +341,8 @@ _objc_getTaggedPointerSignedValue(const void * _Nullable ptr);
 #define _OBJC_TAG_EXT_SLOT_MASK 0xff
 
 #if OBJC_MSB_TAGGED_POINTERS
-#   define _OBJC_TAG_MASK (1UL<<63)
-#   define _OBJC_TAG_INDEX_SHIFT 60
+#   define _OBJC_TAG_MASK (1UL<<63)   // iPhone 真机，TaggedPointer 标志在最高的 1 位
+#   define _OBJC_TAG_INDEX_SHIFT 60   // 
 #   define _OBJC_TAG_SLOT_SHIFT 60
 #   define _OBJC_TAG_PAYLOAD_LSHIFT 4
 #   define _OBJC_TAG_PAYLOAD_RSHIFT 4
@@ -352,7 +352,7 @@ _objc_getTaggedPointerSignedValue(const void * _Nullable ptr);
 #   define _OBJC_TAG_EXT_PAYLOAD_LSHIFT 12
 #   define _OBJC_TAG_EXT_PAYLOAD_RSHIFT 12
 #else
-#   define _OBJC_TAG_MASK 1UL
+#   define _OBJC_TAG_MASK 1UL   // Mac 平台，TaggedPointer 标志在最低的 1 位
 #   define _OBJC_TAG_INDEX_SHIFT 1
 #   define _OBJC_TAG_SLOT_SHIFT 0
 #   define _OBJC_TAG_PAYLOAD_LSHIFT 0
@@ -366,15 +366,24 @@ _objc_getTaggedPointerSignedValue(const void * _Nullable ptr);
 
 extern uintptr_t objc_debug_taggedpointer_obfuscator;
 
+/**
+  *  @brief   对 Tagged Pointer 进行编码，编码原理：是对 ptr（原指针） 进行了 objc_debug_taggedpointer_obfuscator 的异或操作
+  */
 static inline void * _Nonnull
 _objc_encodeTaggedPointer(uintptr_t ptr)
 {
+    // 异步操作：a ^ b，如果 a、b 两个值不相同，则异或结果为 1。如果 a、b 两个值相同，异或结果为 0
+    // 如：1010 ^ 1111 -》0101
     return (void *)(objc_debug_taggedpointer_obfuscator ^ ptr);
 }
 
+/**
+  *  @brief   对  Tagged Pointer 进行解码，解码原理：是对  ptr（编码的结果）进行 objc_debug_taggedpointer_obfuscator 异或操作
+  */
 static inline uintptr_t
 _objc_decodeTaggedPointer(const void * _Nullable ptr)
 {
+    // 0101 ^ 1111 -》1010，两次异或操作就还原了初始值。
     return (uintptr_t)ptr ^ objc_debug_taggedpointer_obfuscator;
 }
 
@@ -417,6 +426,7 @@ _objc_makeTaggedPointer(objc_tag_index_t tag, uintptr_t value)
 static inline bool 
 _objc_isTaggedPointer(const void * _Nullable ptr)
 {
+    // 获取最后一位，如果是 1 即为 tagged pointer
     return ((uintptr_t)ptr & _OBJC_TAG_MASK) == _OBJC_TAG_MASK;
 }
 

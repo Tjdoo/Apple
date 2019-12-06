@@ -29,6 +29,9 @@
 
 // Look for a __DATA or __DATA_CONST or __DATA_DIRTY section 
 // with the given name that stores an array of T.
+/**
+  *  @brief   获取“区”的数据
+  */
 template <typename T>
 T* getDataSection(const headerType *mhdr, const char *sectname, 
                   size_t *outBytes, size_t *outCount)
@@ -65,6 +68,16 @@ GETSECT(_getObjc2CategoryList,        category_t *,    "__objc_catlist");
 GETSECT(_getObjc2NonlazyCategoryList, category_t *,    "__objc_nlcatlist");
 GETSECT(_getObjc2ProtocolList,        protocol_t *,    "__objc_protolist");
 GETSECT(_getObjc2ProtocolRefs,        protocol_t *,    "__objc_protorefs");
+/*  将 GETSECT 宏展开
+ 
+ Initializer *getLibobjcInitializers(const headerType *mhdr, size_t *outCount) {
+        return getDataSection<Initializer>(mhdr, "__objc_init_func", nil, outCount);
+ }
+ 
+ Initializer *getLibobjcInitializers(const header_info *hi, size_t *outCount) {
+        return getDataSection<Initializer>(hi->mhdr(), "__objc_init_func", nil, outCount);
+ }
+    */
 GETSECT(getLibobjcInitializers,       UnsignedInitializer, "__objc_init_func");
 
 

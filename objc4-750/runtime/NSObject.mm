@@ -83,16 +83,16 @@ namespace {
 
 // RefcountMap disguises its pointers because we 
 // don't want the table to act as a root for `leaks`.
-typedef objc::DenseMap<DisguisedPtr<objc_object>,size_t,true> RefcountMap;
+typedef objc::DenseMap<DisguisedPtr<objc_object>/* 对象的内存地址 */, size_t /* 对象的引用计数 */, true> RefcountMap;
 
 // Template parameters.
 enum HaveOld { DontHaveOld = false, DoHaveOld = true };
 enum HaveNew { DontHaveNew = false, DoHaveNew = true };
 
 struct SideTable {
-    spinlock_t slock;
-    RefcountMap refcnts;
-    weak_table_t weak_table;
+    spinlock_t slock;  // 自旋锁
+    RefcountMap refcnts;  // 引用计数表
+    weak_table_t weak_table;  // 弱引用表
 
     SideTable() {
         memset(&weak_table, 0, sizeof(weak_table));
@@ -169,6 +169,9 @@ static void SideTableInit() {
     new (SideTableBuf) StripedMap<SideTable>();
 }
 
+/**
+  *
+ */
 static StripedMap<SideTable>& SideTables() {
     return *reinterpret_cast<StripedMap<SideTable>*>(SideTableBuf);
 }
@@ -402,9 +405,14 @@ objc_storeWeakOrNil(id *location, id newObj)
  * @param location Address of __weak ptr. 
  * @param newObj Object ptr. 
  */
+/**
+  *  @brief   __weak 的底层实现。
+  *  @discussion   并发修改弱引用变量不是线程安全的，并发清除弱引用是线程安全的
+  */
 id
 objc_initWeak(id *location, id newObj)
 {
+    // 判断对象是否为空
     if (!newObj) {
         *location = nil;
         return nil;
@@ -1267,12 +1275,18 @@ objc_object::clearDeallocating_slow()
 {
     assert(isa.nonpointer  &&  (isa.weakly_referenced || isa.has_sidetable_rc));
 
+    // 获取 SideTable
     SideTable& table = SideTables()[this];
     table.lock();
+    
+    // 如果弱引用表里有当前对象的弱指针数组
     if (isa.weakly_referenced) {
+        // 把弱引用表里所有指向该对象的弱指针都置为 nil 并移除，从此弱引用表里就没有该对象的弱指针数组
         weak_clear_no_lock(&table.weak_table, (id)this);
     }
+    // 如果引用计数表里有当前对象的引用计数
     if (isa.has_sidetable_rc) {
+        // 从引用计数表里把该对象的引用计数给抹掉，从此引用计数表里就没有该对象的引用计数了
         table.refcnts.erase(this);
     }
     table.unlock();
@@ -1375,21 +1389,30 @@ objc_object::sidetable_moveExtraRC_nolock(size_t extra_rc,
 
 // Move some retain counts to the side table from the isa field.
 // Returns true if the object is now pinned.
+/**
+  *  @brief   把 delta_rc 个引用计数复制到引用计数表里存储
+  */
 bool 
 objc_object::sidetable_addExtraRC_nolock(size_t delta_rc)
 {
     assert(isa.nonpointer);
+    // 首先把当前对象的内存地址通过某种散列算法得到一个 index，就可以在 SideTables 里找到对象的引用计数所在的 SideTable 结构体
     SideTable& table = SideTables()[this];
 
+    // 这也就是找到了对象的引用计数所在的引用计数表
+    // 然后再次把当前对象的内存地址通过某种散列算法得到一个 index，就可以在引用计数表里找到对象的引用计数
     size_t& refcntStorage = table.refcnts[this];
     size_t oldRefcnt = refcntStorage;
+    
     // isa-side bits should not be set here
+    // 引用计数表里的引用计数有 64 位，但是最低 1 位是用来标记当前对象是否有弱引用，最低 2 位是用来标记当前对象是否正在释放，所以一共 有 62 位用来存储引用计数，这足够大了！
     assert((oldRefcnt & SIDE_TABLE_DEALLOCATING) == 0);
     assert((oldRefcnt & SIDE_TABLE_WEAKLY_REFERENCED) == 0);
 
     if (oldRefcnt & SIDE_TABLE_RC_PINNED) return true;
 
     uintptr_t carry;
+    // 让引用计数 + delta_rc
     size_t newRefcnt = 
         addc(oldRefcnt, delta_rc << SIDE_TABLE_RC_SHIFT, 0, &carry);
     if (carry) {
@@ -1406,13 +1429,18 @@ objc_object::sidetable_addExtraRC_nolock(size_t delta_rc)
 
 // Move some retain counts from the side table to the isa field.
 // Returns the actual count subtracted, which may be less than the request.
-size_t 
+/**
+  *  @brief   尝试从引用计数表搬回来 delta_rc 个引用计数
+  */
+size_t
 objc_object::sidetable_subExtraRC_nolock(size_t delta_rc)
 {
     assert(isa.nonpointer);
     SideTable& table = SideTables()[this];
 
     RefcountMap::iterator it = table.refcnts.find(this);
+    
+    // 引用计数表里的引用计数为 0
     if (it == table.refcnts.end()  ||  it->second == 0) {
         // Side table retain count is zero. Can't borrow.
         return 0;
@@ -1423,9 +1451,11 @@ objc_object::sidetable_subExtraRC_nolock(size_t delta_rc)
     assert((oldRefcnt & SIDE_TABLE_DEALLOCATING) == 0);
     assert((oldRefcnt & SIDE_TABLE_WEAKLY_REFERENCED) == 0);
 
+    // 引用计数表里的引用计数 - delta_rc，搬出去
     size_t newRefcnt = oldRefcnt - (delta_rc << SIDE_TABLE_RC_SHIFT);
     assert(oldRefcnt > newRefcnt);  // shouldn't underflow
     it->second = newRefcnt;
+    
     return delta_rc;
 }
 
@@ -1445,6 +1475,9 @@ objc_object::sidetable_getExtraRC_nolock()
 #endif
 
 
+/**
+  *  @brief   在引用计数表里让当前对象的引用计数 +1
+  */
 id
 objc_object::sidetable_retain()
 {
@@ -1624,23 +1657,35 @@ objc_object::sidetable_clearDeallocating()
 
 
 #if __OBJC2__
-
+/**
+  *  @brief   当前对象调用 retain
+  */
 __attribute__((aligned(16)))
 id 
 objc_retain(id obj)
 {
     if (!obj) return obj;
-    if (obj->isTaggedPointer()) return obj;
+    // Tagged Pointer 不使用引用计数管理内存
+    if (obj->isTaggedPointer())
+        return obj;
+    
+    // 最终调用 ((id(*)(objc_object *, SEL))objc_msgSend)(this, SEL_retain)
     return obj->retain();
 }
 
 
 __attribute__((aligned(16)))
+/**
+  *  @brief   当前对象调用 release
+  */
 void 
 objc_release(id obj)
 {
     if (!obj) return;
+    
     if (obj->isTaggedPointer()) return;
+    
+    // 最终调用 ((void(*)(objc_object *, SEL))objc_msgSend)(this, SEL_release)
     return obj->release();
 }
 
@@ -1785,7 +1830,8 @@ callAlloc(Class cls, bool checkNil, bool allocWithZone=false)
             return obj;
         }
         else {
-            // Has ctor or raw isa or something. Use the slower path.  oc 对象真正创建的方法
+            // Has ctor or raw isa or something. Use the slower path.
+            // oc 对象真正创建的方法
             id obj = class_createInstance(cls, 0);
             if (slowpath(!obj)) return callBadAllocHandler(cls);
             return obj;
@@ -1877,7 +1923,7 @@ objc_autoreleasePoolPush(void)
 }
 
 /**
-  *  @brief   自动释放池推栈
+  *  @brief   自动释放池出栈
   */
 void
 objc_autoreleasePoolPop(void *ctxt)
@@ -2294,6 +2340,9 @@ void arr_init(void)
 }
 
 // Replaced by ObjectAlloc
+/**
+  *  @brief   引用计数 + 1
+  */
 - (id)retain {
     return ((id)self)->rootRetain();
 }
@@ -2336,6 +2385,9 @@ void arr_init(void)
 }
 
 // Replaced by ObjectAlloc
+/**
+ *  @brief   引用计数 - 1
+ */
 - (oneway void)release {
     ((id)self)->rootRelease();
 }
@@ -2387,6 +2439,9 @@ void arr_init(void)
 
 
 // Replaced by NSZombies
+/**
+  *  @brief   对象销毁
+  */
 - (void)dealloc {
     _objc_rootDealloc(self);
 }

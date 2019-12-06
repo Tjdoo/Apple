@@ -10,6 +10,8 @@
 #import "TestAlloc.h"
 #import "TestWeak.h"
 #import "TestAssociate.h"
+#import "TestAutoreleasePool.h"
+#import "TestTaggedPointer.h"
 
 
 int sum(int a, int b) {
@@ -42,9 +44,11 @@ int main(int argc, const char * argv[]) {
         
         
         
-//        [TestAlloc dowork];
-//        [TestWeak  dowork];
-        [TestAssociate dowork];
+//        [TestAlloc test];
+//        [TestWeak test];
+//        [[TestAssociate alloc] test];
+//        [TestAutoreleasepool test];
+//        [TestTaggedPointer test];
     }
     return 0;
 }

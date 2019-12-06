@@ -54,20 +54,23 @@
     // uintptr_t lock : 2;        // lock for atomic property, @synch
     // uintptr_t extraBytes : 1;  // allocated with extra bytes
 
+/**
+  *  @discussion   64 位中只有 33 位用来存储对象所属类的地址信息，还有 19 位用来存储（对象的引用计数 - 1），还有 1 位用来标记引用计数表里是否有当前对象的引用计数。
+  */
 # if __arm64__
 #   define ISA_MASK        0x0000000ffffffff8ULL
 #   define ISA_MAGIC_MASK  0x000003f000000001ULL
 #   define ISA_MAGIC_VALUE 0x000001a000000001ULL
 #   define ISA_BITFIELD                                                      \
-      uintptr_t nonpointer        : 1;                                       \
+      uintptr_t nonpointer        : 1;  /*  isa是否经过内存优化 */                 \
       uintptr_t has_assoc         : 1;                                       \
       uintptr_t has_cxx_dtor      : 1;                                       \
-      uintptr_t shiftcls          : 33; /*MACH_VM_MAX_ADDRESS 0x1000000000*/ \
+      uintptr_t shiftcls          : 33; /*MACH_VM_MAX_ADDRESS 0x1000000000  对象所属类的地址信息*/ \
       uintptr_t magic             : 6;                                       \
       uintptr_t weakly_referenced : 1;                                       \
       uintptr_t deallocating      : 1;                                       \
-      uintptr_t has_sidetable_rc  : 1;                                       \
-      uintptr_t extra_rc          : 19
+      uintptr_t has_sidetable_rc  : 1;  /* 引用计数表里是否有当前对象的引用计数 */   \
+      uintptr_t extra_rc          : 19  /*  对象的引用计数 - 1  */
 #   define RC_ONE   (1ULL<<45)
 #   define RC_HALF  (1ULL<<18)
 

@@ -628,9 +628,13 @@ unmap_image_nolock(const struct mach_header *mh)
 * libc calls _objc_init() before dyld would call our static constructors, 
 * so we have to do it ourselves.
 **********************************************************************/
+/**
+  *  @see   [iOS开发之runtime（11）：深入理解static_init()](https://www.jianshu.com/p/d3b5236e3c62)
+  */
 static void static_init()
 {
     size_t count;
+    // 核心
     auto inits = getLibobjcInitializers(&_mh_dylib_header, &count);
     for (size_t i = 0; i < count; i++) {
         inits[i]();
@@ -868,10 +872,12 @@ void _objc_atfork_child()
 
 /***********************************************************************
 * _objc_init
-* Bootstrap initialization. Registers our image notifier with dyld.
-* Called by libSystem BEFORE library initialization time
+* Bootstrap initialization. Registers our image notifier with dyld.  引导初始化。
+* Called by libSystem BEFORE library initialization time   在 libSystem BEFORE 库初始化时调用
 **********************************************************************/
-
+/**
+  *  @brief   runtime 初始化方法
+  */
 void _objc_init(void)
 {
     static bool initialized = false;
@@ -881,6 +887,7 @@ void _objc_init(void)
     // fixme defer initialization until an objc-using image is found?
     environ_init();
     tls_init();
+    // 找出 __objc_init_func 区的数据，获取了 Initializer 指针，然后按顺序调用。
     static_init();
     lock_init();
     exception_init();

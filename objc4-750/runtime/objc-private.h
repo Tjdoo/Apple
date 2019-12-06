@@ -66,16 +66,25 @@ namespace {
 };
 
 #include "isa.h"
-
+/**
+  *  @discussion   共用体。在 64 位操作系统以前，对象的 isa 指针还没经过内存优化，对象的引用计数是直接存储在引用计数表里。64 为操作系统以后，对象的 isa 指针经过了内存优化，它不在直接是一个指针，而是一个共用体。64 位中只有 33 位用来存储对象所属类的地址信息，还有 19 位用来存储（对象的引用计数 - 1），还有 1 位用来标记引用计数表里是否有当前对象的引用计数。
+ 
+        具体地说，对象的引用计数会首先存储在它的 isa 共用体里的  extra_rc 变量，但是 isa 共用体里引用计数的存值范围是 0~255，一旦对象的引用计数超过 255，这个变量就会溢出，此时系统会把这个变量置为 128，会把引用计数表里是否有当前对象的引用计数的标记 hash_sidetable_rc 变量置为 1，并把另外的 128 个引用计数挪到引用计数表里存储。那么下一次再增加对象的引用计数时，就依旧增加 isa 共用体里的引用计数（此时它已经被置为了 128，不会直接溢出），直到再次溢出，系统再挪 128 个引用计数到引用计数表里存储，如此循环。
+ 
+        因此我们可以看到在这种情况下，系统其实不是直接去操作引用技术表里的引用计数的，而是在操作 isa 共用体里的引用计数，直到溢出时才从 isa 共用体里挪 128 个到引用技术表里存储。
+  */
 union isa_t {
     isa_t() { }
     isa_t(uintptr_t value) : bits(value) { }
 
     Class cls;
-    uintptr_t bits;
+    uintptr_t bits;  // 8个字节，64位。
+    
+    // 其实下面结构体的内容都存在 bits 里面，因为外界只访问它
+    // 而这个结构体则仅仅是用位域来增加代码的可读性，让我们看到 bits 里面相应的位上存储着谁的数据
 #if defined(ISA_BITFIELD)
     struct {
-        ISA_BITFIELD;  // defined in isa.h
+        ISA_BITFIELD;  // defined in isa.h   在 isa.h 文件中
     };
 #endif
 };
@@ -83,12 +92,12 @@ union isa_t {
 
 struct objc_object {
 private:
-    isa_t isa;
+    isa_t isa;  // 一个 isa_t 类型的共用体
 
 public:
 
     // ISA() assumes this is NOT a tagged pointer object
-    Class ISA();
+    Class ISA(); // 返回对象的 isa 指针，如果是一个 TaggedPointer 指针，会触发断言
 
     // getIsa() allows this to be a tagged pointer object
     Class getIsa();
