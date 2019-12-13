@@ -498,7 +498,8 @@ void _class_initialize(Class cls)
     // See note about deadlock above.
     // 获取父类
     supercls = cls->superclass;
-    // 父类未初始化
+    // 父类存在 && 父类还没有执行 initialized 方法
+    // 有时候父类的 initialize 方法会被调用多次，这是由于当子类没有实现 initialize 方法时，会先调用父类的 initialize 方法（第一次），然后再调用自己的 initialize 方法，由于是通过 obj_msgSend 消息机制调用，通过 isa 找到类对象，如果没有则去父类中查找，找到再调用（第二次）
     if (supercls  &&  !supercls->isInitialized()) {
         // 递归调用
         _class_initialize(supercls);

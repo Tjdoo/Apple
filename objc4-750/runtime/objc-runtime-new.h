@@ -874,13 +874,15 @@ class protocol_array_t :
     }
 };
 
-
+/**
+  *  @brief   类的内容
+  */
 struct class_rw_t {
     // Be warned that Symbolication knows the layout of this structure.
     uint32_t flags;
     uint32_t version;
 
-    const class_ro_t *ro;
+    const class_ro_t *ro;  // [class_ro_t 和 class_rw_t 的区别？]（https://www.jianshu.com/p/823eaedb3697）
 
     method_array_t methods;  // 方法列表
     property_array_t properties; // 属性列表

@@ -213,12 +213,13 @@ static void call_class_loads(void)
         if (PrintLoading) {
             _objc_inform("LOAD: +[%s load]\n", cls->nameForLogging());
         }
-        // 直接拿到 load 方法的内存地址直接调用方法，不在是通过消息发送机制调用。
+        // 直接拿到 load 方法的内存地址直接调用方法，不是通过消息发送机制调用。
         (*load_method)(cls, SEL_load);
     }
     
     // Destroy the detached list.
-    if (classes) free(classes);
+    if (classes)
+        free(classes);
 }
 
 

@@ -2205,10 +2205,12 @@ load_images(const char *path __unused, const struct mach_header *mh)
     // Discover load methods
     {
         mutex_locker_t lock2(runtimeLock);
+        // 预处理 +load
         prepare_load_methods((const headerType *)mh);
     }
 
     // Call +load methods (without runtimeLock - re-entrant)
+    // 调用 +load 方法
     call_load_methods();
 }
 
@@ -2878,8 +2880,9 @@ static void schedule_class_load(Class cls)
     if (cls->data()->flags & RW_LOADED) return;
 
     // Ensure superclass-first ordering
+    // 父类调用 +load
     schedule_class_load(cls->superclass);
-
+    // 添加到可执行 +load 的类列表中
     add_class_to_loadable_list(cls);
     cls->setInfo(RW_LOADED); 
 }
@@ -2893,25 +2896,34 @@ bool hasLoadMethods(const headerType *mhdr)
     return false;
 }
 
+/**
+  *  @brief   执行类的 +load 方法
+  */
 void prepare_load_methods(const headerType *mhdr)
 {
     size_t count, i;
 
     runtimeLock.assertLocked();
 
+    // 非懒加载的类
     classref_t *classlist = 
         _getObjc2NonlazyClassList(mhdr, &count);
     for (i = 0; i < count; i++) {
+        // 调用类的 +load
         schedule_class_load(remapClass(classlist[i]));
     }
 
+    // 非懒加载的非分类
     category_t **categorylist = _getObjc2NonlazyCategoryList(mhdr, &count);
     for (i = 0; i < count; i++) {
+        // 分类
         category_t *cat = categorylist[i];
         Class cls = remapClass(cat->cls);
-        if (!cls) continue;  // category for ignored weak-linked class
+        if (!cls)
+            continue;  // category for ignored weak-linked class
         realizeClass(cls);
         assert(cls->ISA()->isRealized());
+        // 添加到可执行 +load 的分类列表中
         add_category_to_loadable_list(cat);
     }
 }
@@ -4900,22 +4912,23 @@ IMP lookUpImpOrForward(Class cls, SEL sel, id inst,
 
     runtimeLock.assertUnlocked();
 
-    // Optimistic cache lookup
+    // Optimistic cache lookup  缓存查找
     if (cache) {
         imp = cache_getImp(cls, sel);
-        if (imp) return imp;
+        // 缓存中找到直接返回
+        if (imp)
+            return imp;
     }
 
-    // runtimeLock is held during isRealized and isInitialized checking
-    // to prevent races against concurrent realization.
-
-    // runtimeLock is held during method search to make
-    // method-lookup + cache-fill atomic with respect to method addition.
-    // Otherwise, a category could be added but ignored indefinitely because
-    // the cache was re-filled with the old value after the cache flush on
-    // behalf of the category.
+    // runtimeLock is held during isRealized and isInitialized checking to prevent races against concurrent realization.
+    // runtimeLock 在 isRealized 和 isInitialized 检查过程中被持有，以防止对并发实现的竞争。
+    
+    // runtimeLock is held during method search to make method-lookup + cache-fill atomic with respect to method addition.
+    // Otherwise, a category could be added but ignored indefinitely because the cache was re-filled with the old value after the cache flush on behalf of the category.
+    // runtimeLock 在方法搜索期间被保持，以使方法查找+关于缓存填充的方法添加原子化。否则，可以添加类别，但会无限期忽略该类别，因为在代表该类别刷新缓存后，缓存将重新填充旧值。
 
     runtimeLock.lock();
+    // 查找是否是已知的类
     checkIsKnownClass(cls);
 
     if (!cls->isRealized()) {
